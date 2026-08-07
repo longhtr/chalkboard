@@ -13,7 +13,7 @@ FROM workspace AS build
 COPY . .
 RUN pnpm --filter @chalkboard/web build
 
-FROM nginxinc/nginx-unprivileged:1.31.3-alpine@sha256:59ccf0943b0b8e8d9e6ea9039a39555730f544701a655c596f7df7d096c593f5 AS production
+FROM nginxinc/nginx-unprivileged:1.31.3-alpine@sha256:a6c3ec0c0d249d68b0682df854d4a9e222b90fb607dc3fcf2f1d2fcbc85d347e AS production
 ARG APP_VERSION=0.1.0
 ARG VCS_REF=development
 LABEL org.opencontainers.image.title="Chalkboard web" \
