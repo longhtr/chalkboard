@@ -1,0 +1,43 @@
+/* Camera zoom/reset controls anchored independently from editor content. */
+.zoom-controls,
+.history-controls {
+  display: flex;
+  bottom: 16px;
+  height: 38px;
+  padding: 3px;
+  align-items: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 7%);
+}
+
+.zoom-controls {
+  left: 16px;
+}
+
+.history-controls {
+  left: 170px;
+}
+
+.zoom-controls button,
+.history-controls button {
+  min-width: 31px;
+  height: 30px;
+}
+
+.zoom-controls .zoom-value {
+  width: 54px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-image-element {
+  position: absolute;
+  display: block;
+  max-width: none;
+  object-fit: contain;
+  transform-origin: left top;
+  user-select: none;
+  -webkit-user-drag: none;
+}

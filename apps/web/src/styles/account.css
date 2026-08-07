@@ -1,0 +1,481 @@
+/* Account modal, route notices, board library, members, invitations, and trash. */
+.account-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(31 41 55 / 24%);
+  backdrop-filter: blur(3px);
+}
+
+.account-panel {
+  width: min(520px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid rgb(17 24 39 / 10%);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(31 41 55 / 20%);
+}
+
+.account-panel--auth {
+  width: min(420px, 100%);
+  padding: 32px;
+}
+
+.account-panel--settings,
+.board-access-panel {
+  width: min(520px, 100%);
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+/* Names the thing being acted on without competing with the panel heading. */
+.account-panel-subject {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.account-header h2 {
+  margin: 3px 0 0;
+  color: #111827;
+  font-size: 24px;
+}
+
+.account-panel--auth .account-header {
+  margin-bottom: 24px;
+}
+
+.account-panel--auth .account-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+.account-panel--auth .account-close {
+  width: 34px;
+  height: 34px;
+}
+
+.account-kicker {
+  color: #6965db;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: #f5f4ff;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.account-panel--auth .account-form {
+  margin-top: 0;
+}
+
+.account-form {
+  display: grid;
+  gap: 15px;
+  margin-top: 18px;
+}
+
+.account-form label {
+  display: grid;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.account-form input,
+.account-setting-form input {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #fff;
+  outline: none;
+}
+
+.account-form input:focus,
+.account-setting-form input:focus {
+  border-color: #6965db;
+  box-shadow: 0 0 0 3px rgb(105 101 219 / 13%);
+}
+
+.account-form input[aria-invalid='true'] {
+  border-color: #c59b3d;
+  background: #fffcf3;
+}
+
+.account-field-error {
+  color: #765b18;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.account-primary {
+  padding: 11px 16px;
+  border-radius: 9px;
+  background: #6965db;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-mode-switch {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 18px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.account-mode-switch button {
+  padding: 0;
+  background: transparent;
+  color: #514dc5;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-mode-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-forgot-password {
+  justify-self: end;
+  padding: 0;
+  color: #514dc5;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.account-form-introduction {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.email-verification,
+.account-notice {
+  display: grid;
+  gap: 8px;
+}
+
+.verification-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.verification-actions button {
+  padding: 6px 0;
+  color: #514dc5;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #e5e3fd;
+  border-radius: 9px;
+  background: #f8f7ff;
+  color: #4b4a80;
+  font-size: 13px;
+}
+
+.account-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #fff7df;
+  color: #765b18;
+  font-size: 13px;
+}
+
+.account-status {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #e5e3fd;
+  border-radius: 10px;
+  background: #f8f7ff;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.account-status strong {
+  color: #37347f;
+}
+
+.account-status button {
+  justify-self: center;
+  margin-top: 3px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #eeecff;
+  color: #514dc5;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-settings-shell,
+.account-settings {
+  width: 100%;
+  gap: 18px;
+}
+
+/* Each section commits with one full-width button, matching the auth form. */
+.account-setting-form .account-primary,
+.account-setting-form button[type='submit'] {
+  width: 100%;
+}
+
+.account-setting-form {
+  display: grid;
+  padding-top: 16px;
+  gap: 11px;
+  border-top: 1px solid #ecebf2;
+}
+
+.account-setting-form:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-setting-form > div {
+  display: grid;
+  gap: 3px;
+}
+
+.account-setting-form h3,
+.account-setting-form p {
+  margin: 0;
+}
+
+.account-setting-form h3 {
+  color: #292748;
+  font-size: 16px;
+}
+
+.account-setting-form p {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.account-setting-form label {
+  display: grid;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.account-setting-form .account-primary {
+  justify-self: start;
+}
+
+.account-sign-out {
+  justify-self: start;
+  padding: 9px 12px;
+  border: 1px solid #d8d6e4;
+  border-radius: 8px;
+  color: #514dc5;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-sign-out:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.board-access-summary {
+  padding: 14px;
+  border-radius: 10px;
+  background: #f7f7fb;
+  color: #4b5563;
+}
+
+.board-access-summary p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.board-access-panel .member-manager {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+.member-manager {
+  margin-top: 4px;
+}
+
+.member-row,
+.member-invite {
+  display: flex;
+  align-items: center;
+}
+
+.member-invite {
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.invite-link-manager {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.invite-link-manager .member-role-help {
+  margin: 0 0 2px;
+}
+
+.invite-link-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto auto;
+  gap: 7px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f8f8fb;
+}
+
+.invite-link-row > span {
+  display: grid;
+  min-width: 0;
+}
+
+.invite-link-row > span > strong::first-letter {
+  text-transform: uppercase;
+}
+
+.invite-link-row small {
+  color: #6b7280;
+  font-size: 11px;
+  text-transform: none;
+}
+
+.invite-link-row button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #eeecff;
+  color: #433f9d;
+  cursor: pointer;
+}
+
+.invite-link-row .invite-link-revoke {
+  background: #fff7df;
+  color: #765b18;
+}
+
+.member-invite input,
+.member-invite select,
+.member-row select {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.member-invite input {
+  flex: 1;
+}
+
+.member-role-help {
+  margin: -4px 0 12px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.member-list {
+  display: grid;
+  gap: 7px;
+}
+
+.member-row {
+  gap: 9px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8f8fb;
+}
+
+.member-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dddafe;
+  color: #433f9d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.member-details {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.member-details small {
+  overflow: hidden;
+  color: #6b7280;
+  text-overflow: ellipsis;
+}
+
+.member-role-label {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.member-remove {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #fff7df;
+  color: #765b18;
+  cursor: pointer;
+  font-size: 18px;
+}

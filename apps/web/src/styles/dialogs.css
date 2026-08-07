@@ -1,0 +1,418 @@
+/* Shared modal shell plus board menu, export, shortcuts, and LaTeX reference dialogs. */
+.dialog-backdrop {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgb(31 41 55 / 24%);
+  inset: 0;
+  backdrop-filter: blur(2px);
+}
+
+.shortcuts-dialog {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  padding: 20px;
+  overflow: auto;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgb(31 41 55 / 24%);
+}
+
+.shortcuts-dialog__header {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shortcuts-dialog__header h2 {
+  margin: 0;
+  color: #292748;
+  font-size: 18px;
+}
+
+.shortcuts-dialog__header p {
+  margin: 5px 0 0;
+  color: #626879;
+  font-size: 11px;
+}
+
+.shortcuts-dialog__close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #dedce8;
+  border-radius: 8px;
+  color: #6b7280;
+  background: #fff;
+  font-family: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shortcuts-dialog__close:hover {
+  border-color: #aaa5df;
+  color: #433f9d;
+  background: #f8f7ff;
+}
+
+.shortcuts-dialog__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.shortcuts-dialog__sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 30px;
+}
+
+.export-dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgb(31 41 55 / 24%);
+}
+
+.export-dialog__body {
+  display: grid;
+  gap: 18px;
+}
+
+.export-dialog fieldset {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.export-dialog legend,
+.export-scale {
+  margin-bottom: 8px;
+  color: #626879;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.export-option-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.export-option-row label,
+.export-checkbox {
+  display: flex;
+  min-height: 38px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #dedce8;
+  border-radius: 8px;
+  color: #45435d;
+  background: #fafafe;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.export-option-row label:has(input:checked) {
+  border-color: #827dcc;
+  background: #f3f1ff;
+}
+
+.export-option-row label.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-scale {
+  display: flex;
+  margin: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.export-scale select {
+  min-width: 80px;
+  padding: 7px 9px;
+  border: 1px solid #dedce8;
+  border-radius: 7px;
+  color: #45435d;
+  background: #fff;
+  font: inherit;
+}
+
+.export-padding__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.export-padding__grid label {
+  display: grid;
+  gap: 5px;
+  color: #626879;
+  font-size: 10px;
+}
+
+.export-padding__grid .shape-number-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.export-error {
+  padding: 9px 11px;
+  margin: 0;
+  border: 1px solid #d7b765;
+  border-radius: 7px;
+  color: #66531e;
+  background: #fff9e8;
+  font-size: 11px;
+}
+
+.export-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.export-dialog__actions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #dedce8;
+  border-radius: 8px;
+  color: #55536f;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.export-dialog__actions button.export-primary {
+  border-color: #5e59b5;
+  color: #fff;
+  background: #6965db;
+}
+
+.export-dialog__actions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.shortcut-section--wide {
+  grid-column: 1 / -1;
+}
+
+.shortcut-section h3 {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.shortcut-section dl {
+  margin: 0;
+}
+
+.shortcut-section--wide dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 30px;
+}
+
+.shortcut-row {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f0eff4;
+}
+
+.shortcut-row dt {
+  color: #4b5563;
+  font-size: 11px;
+}
+
+.shortcut-row dd {
+  display: flex;
+  margin: 0;
+  align-items: center;
+  gap: 3px;
+  color: #9ca3af;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.shortcut-row kbd {
+  min-width: 20px;
+  padding: 3px 5px;
+  box-sizing: border-box;
+  border: 1px solid #dedce8;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: #55536f;
+  background: #fafafe;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+}
+
+.latex-cheatsheet-dialog {
+  width: min(1080px, calc(100vw - 32px));
+  padding: 24px;
+  user-select: text;
+}
+
+.latex-cheatsheet-dialog .shortcuts-dialog__header h2 {
+  font-size: 26px;
+}
+
+.latex-cheatsheet-dialog .shortcuts-dialog__header p {
+  font-size: 15px;
+}
+
+.latex-cheatsheet-tips {
+  display: flex;
+  padding: 12px 14px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  border: 1px solid #e4e2f1;
+  border-radius: 9px;
+  color: #626879;
+  background: #faf9ff;
+  font-size: 14px;
+}
+
+.latex-cheatsheet-tips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.latex-cheatsheet-tips kbd {
+  padding: 4px 6px;
+  border: 1px solid #dedce8;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  color: #55536f;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.latex-cheatsheet-search {
+  display: grid;
+  margin-bottom: 26px;
+  gap: 8px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.latex-cheatsheet-search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #dedce8;
+  border-radius: 9px;
+  outline: none;
+  color: #292748;
+  background: #fff;
+  font-size: 15px;
+}
+
+.latex-cheatsheet-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.latex-cheatsheet-empty {
+  margin: 32px 0;
+  color: #7b8190;
+  font-size: 15px;
+  text-align: center;
+}
+
+.latex-cheatsheet-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 40px;
+}
+
+.latex-cheatsheet-section h3 {
+  margin: 0 0 10px;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.latex-cheatsheet-entries {
+  display: grid;
+}
+
+.latex-cheatsheet-entry {
+  display: grid;
+  min-height: 110px;
+  padding: 12px 0;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #f0eff4;
+}
+
+.latex-cheatsheet-entry__description {
+  display: block;
+  margin-bottom: 5px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.latex-cheatsheet-entry code {
+  display: block;
+  cursor: text;
+  user-select: text;
+  color: #514dc7;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.latex-cheatsheet-entry__preview {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 10px 6px;
+  align-items: center;
+  justify-content: center;
+  cursor: text;
+  user-select: text;
+  overflow: visible;
+  color: #1f2937;
+  font-size: 24px;
+  text-align: center;
+}

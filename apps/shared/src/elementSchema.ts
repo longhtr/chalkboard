@@ -1,0 +1,195 @@
+/**
+ * Canonical persisted board-element schema. Coordinates and dimensions are
+ * world-space values; camera pixels, selection, drafts, and other UI state do
+ * not belong in these records.
+ */
+/** Persisted discriminator for every board element representation. */
+export type ElementType =
+  'rectangle' | 'shape' | 'line' | 'arrow' | 'freehand' | 'equation' | 'image';
+
+/** Geometric outline represented by a modern shape element. */
+export type ShapeKind =
+  | 'rectangle'
+  | 'triangle'
+  | 'ellipse'
+  | 'diamond'
+  | 'pentagon'
+  | 'hexagon'
+  | 'parallelogram'
+  | 'trapezoid'
+  | 'star';
+/** Visible dash pattern applied to an element outline. */
+export type StrokeStyle = 'solid' | 'dashed' | 'dotted';
+/** Geometry model used by a line element. */
+export type PathKind = 'straight' | 'bezier' | 'orthogonal';
+/** Positional, tangent, or curvature continuity requested between Bézier segments. */
+export type SplineContinuity = 'c0' | 'c1' | 'c2';
+/** Arrowhead placement on a line path. */
+export type LineArrowheads = 'none' | 'end' | 'both';
+/** How a shape's fill colour occupies its interior. */
+export type FillStyle = 'cross-hatch' | 'hachure' | 'solid';
+/** Hard bound that keeps persisted freehand records and rendering work finite. */
+export const MAX_FREEHAND_POINTS = 4_096;
+/** Unitless line-height multiplier used when legacy equations omit spacing. */
+export const DEFAULT_EQUATION_LINE_SPACING = 1.2;
+
+/** Two-dimensional world-space coordinate or vector. */
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** Visual attributes shared by every persisted element. */
+export interface ElementStyle {
+  backgroundColor: string;
+  opacity: number;
+  strokeColor: string;
+  strokeStyle?: StrokeStyle;
+  strokeWidth: number;
+}
+
+/** Identity, world bounds, and visual state shared by persisted elements. */
+export interface BaseElement extends ElementStyle {
+  createdBy: string;
+  height: number;
+  id: string;
+  rotation: number;
+  type: ElementType;
+  width: number;
+  x: number;
+  y: number;
+}
+
+/** Legacy rectangle stored by earlier Chalkboard versions. */
+export interface RectangleElement extends BaseElement {
+  type: 'rectangle';
+}
+
+/** Modern parametric shape whose outline is derived from bounds and shape kind. */
+export interface ShapeElement extends BaseElement {
+  cornerRadius: number;
+  /** World-space gap between hatch lines; absent means the default. Solid fills ignore it. */
+  fillSpacing?: number;
+  /** Interior treatment for `backgroundColor`; absent means solid. */
+  fillStyle?: FillStyle;
+  shapeKind: ShapeKind;
+  /** Normalized horizontal position of the trapezoid's top-left corner. */
+  trapezoidTopLeft?: number;
+  /** Normalized horizontal position of the trapezoid's top-right corner. */
+  trapezoidTopRight?: number;
+  type: 'shape';
+}
+
+/** Cubic Bézier controls and endpoint relative to the owning line origin. */
+export interface BezierSegment {
+  control1: Point;
+  control2: Point;
+  end: Point;
+}
+
+/** Straight, orthogonal, or cubic path with optional endpoint decoration. */
+export interface LineElement extends BaseElement {
+  arrowheads?: LineArrowheads;
+  pathKind: PathKind;
+  segments: BezierSegment[];
+  splineContinuity?: SplineContinuity;
+  type: 'line';
+}
+
+/** Legacy straight arrow retained for persisted-format compatibility. */
+export interface ArrowElement extends BaseElement {
+  type: 'arrow';
+}
+
+/** Sampled freehand stroke whose points are relative to its world origin. */
+export interface FreehandElement extends BaseElement {
+  /** Endpoint decoration; direction comes from the sampled stroke tangent. */
+  arrowheads?: LineArrowheads;
+  points: Point[];
+  type: 'freehand';
+}
+
+/** Raster or sanitized SVG image referenced by data URL or cloud asset URL. */
+export interface ImageElement extends BaseElement {
+  name: string;
+  source: string;
+  type: 'image';
+}
+
+/** Mixed prose/LaTeX block rendered and edited through MathLive. */
+export interface EquationElement extends BaseElement {
+  /** Font size used by the rendered MathLive view. */
+  fontSize: number;
+  /** Unitless multiplier; legacy elements default to 1.2. */
+  lineSpacing?: number;
+  source: string;
+  /** Font size used by Source view; legacy elements derive this from fontSize. */
+  sourceFontSize?: number;
+  type: 'equation';
+}
+
+/** Legacy difference used when source-view font size was not persisted. */
+export const EQUATION_SOURCE_FONT_SIZE_OFFSET = 5;
+
+/** Returns the explicit source-view size or its legacy derived value. */
+export function equationSourceFontSize(element: EquationElement): number {
+  return (
+    element.sourceFontSize ??
+    element.fontSize - EQUATION_SOURCE_FONT_SIZE_OFFSET
+  );
+}
+
+/** Any element represented by a start/end path rather than an area. */
+export type LinearElement = LineElement | ArrowElement;
+
+/** Closed union accepted by storage, rendering, collaboration, and export. */
+export type BoardElement =
+  | RectangleElement
+  | ShapeElement
+  | LineElement
+  | ArrowElement
+  | FreehandElement
+  | EquationElement
+  | ImageElement;
+
+/** Initial visual state for newly created elements. */
+export const DEFAULT_ELEMENT_STYLE: ElementStyle = {
+  backgroundColor: 'transparent',
+  opacity: 1,
+  strokeColor: '#1f2937',
+  strokeStyle: 'solid',
+  strokeWidth: 2,
+};
+
+/** Narrows any board element to a legacy or modern bounded shape. */
+export function isShapeElement(
+  element: BoardElement,
+): element is RectangleElement | ShapeElement {
+  return element.type === 'rectangle' || element.type === 'shape';
+}
+
+/** Narrows any board element to a line or legacy arrow. */
+export function isLinearElement(
+  element: BoardElement,
+): element is LinearElement {
+  return element.type === 'line' || element.type === 'arrow';
+}
+
+/** Narrows any board element to a sampled freehand stroke. */
+export function isFreehandElement(
+  element: BoardElement,
+): element is FreehandElement {
+  return element.type === 'freehand';
+}
+
+/** Narrows any board element to an image. */
+export function isImageElement(element: BoardElement): element is ImageElement {
+  return element.type === 'image';
+}
+
+/** Narrows any board element to a mixed prose/LaTeX block. */
+export function isEquationElement(
+  element: BoardElement,
+): element is EquationElement {
+  return element.type === 'equation';
+}

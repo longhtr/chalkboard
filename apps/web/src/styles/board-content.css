@@ -1,0 +1,202 @@
+/* World-positioned text, equations, images, active editing, and collaborator overlays. */
+.math-element {
+  position: absolute;
+  width: max-content;
+  min-width: 12px;
+  color: #1f2937;
+  transform-origin: left top;
+  pointer-events: none;
+}
+
+.math-element.is-simplified {
+  overflow: hidden;
+  font-family: var(--mixed-text-font-family);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.math-element__content,
+.mixed-text-element__content {
+  --text-font-family: var(--mixed-text-font-family);
+
+  font-synthesis: none;
+}
+
+.math-element__content {
+  display: flex;
+  width: max-content;
+  padding: 2px 3px 2px 1px;
+  transform: translateX(-1px);
+}
+
+.mixed-text-element__content {
+  display: inline-flex;
+}
+
+.mixed-text-element__content .ML__text,
+.inline-math-editor math-field .ML__text {
+  line-height: var(--mixed-line-spacing, 1.2em) !important;
+  font-synthesis: none;
+}
+
+.math-element__content .ML__text,
+.mixed-text-element__content .ML__text {
+  font-family: var(--mixed-text-font-family) !important;
+}
+
+.mixed-text-line-break {
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.mixed-text-line-break + .mixed-text-line-break {
+  height: var(--mixed-line-spacing, 1.2em) !important;
+}
+
+.mixed-text-color-marker {
+  display: inline-block !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  color: transparent !important;
+}
+
+.mixed-text-literal-backslash,
+.mixed-text-literal-dollar {
+  position: relative !important;
+  display: inline-block !important;
+  width: 0.55em !important;
+  overflow: visible !important;
+  color: transparent !important;
+}
+
+.mixed-text-literal-backslash::after,
+.mixed-text-literal-dollar::after {
+  position: absolute;
+  left: 0;
+  color: var(--run-color, var(--element-color, #1f2937));
+}
+
+.mixed-text-literal-backslash::after {
+  content: '\\';
+}
+
+.mixed-text-literal-dollar::after {
+  content: '$';
+}
+
+.equation-source-editor {
+  position: absolute;
+  z-index: 31;
+  box-sizing: content-box;
+  min-width: 24px;
+  min-height: 28px;
+  padding: 2px 3px 2px 1px;
+  resize: none;
+  overflow: hidden;
+  border: 0;
+  outline: 0;
+  appearance: none;
+  background: transparent;
+  caret-color: #514dc7;
+  font-family: var(--mixed-text-font-family);
+  font-synthesis: none;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  tab-size: 2;
+  transform-origin: left top;
+  user-select: text;
+  white-space: pre-wrap;
+}
+
+.equation-source-editor:focus-visible {
+  outline: 0;
+}
+
+.inline-math-editor {
+  position: absolute;
+  z-index: 30;
+  width: max-content;
+  min-width: 24px;
+  min-height: 28px;
+  color: #1f2937;
+  transform-origin: left top;
+  opacity: 0;
+  pointer-events: none;
+  user-select: text;
+}
+
+.inline-math-editor.is-ready {
+  opacity: 1;
+}
+
+.inline-math-editor.is-ready {
+  pointer-events: auto;
+}
+
+.inline-math-editor.is-source-view {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.inline-math-editor__selection {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.inline-math-editor__selection-rect {
+  position: absolute;
+  display: block;
+  border-radius: 2px;
+  background: #dcd9ff;
+}
+
+.inline-math-editor math-field {
+  --caret-color: #514dc7;
+  --contains-highlight-background-color: transparent;
+  --selection-background-color: #dcd9ff;
+  --selection-color: var(--editor-color, #1f2937);
+  --text-font-family: var(--mixed-text-font-family);
+
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  width: max-content;
+  min-width: 1.1em;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: var(--editor-color, #1f2937);
+  background: transparent;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  transform: translateX(-1px);
+}
+
+.inline-math-editor math-field::part(container) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.inline-math-editor math-field::part(menu-toggle),
+.inline-math-editor math-field::part(virtual-keyboard-toggle) {
+  display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
