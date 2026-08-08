@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-chalkboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chalkboard}
+      POSTGRES_USER: ${POSTGRES_USER:-chalkboard}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - ${POSTGRES_DATA_PATH:-./.data/development-postgres}:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-chalkboard} -d ${POSTGRES_DB:-chalkboard}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
