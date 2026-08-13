@@ -1,0 +1,32 @@
+Excalifont attribution and provenance
+
+The canonical upstream metadata in references/Excalifont-Regular.woff2 states:
+
+Copyright (c) 2024 by Excalidraw. All rights reserved.
+
+Trademark:
+Excalifont is a trademark of Excalidraw.
+
+Designer / manufacturer / author attribution:
+Your Own Font Foundry (Virgil); Ján Filípek / DizajnDesign (Excalifont, modifications)
+
+Designer and manufacturer URL:
+https://dizajndesign.sk
+
+The delivered adapter fonts contain Excalifont-derived outlines produced by
+this repository. Their internal font family names begin with “Excalifont Extended ML”.
+The KaTeX_* strings in mathlive-fonts.css, filenames, manifests, and font-map
+keys are CSS/runtime compatibility identifiers required by MathLive 0.110.0;
+they are not the internal primary names of the delivered fonts.
+
+MathLive/KaTeX font resources supply compatibility cmap mappings and renderer
+structure only. Excalifont's native outlines, advances, and vertical metrics
+are retained; the upstream font outlines and locally supplied reference
+binaries are not redistributed. See KATEX_FONT_NOTICE.txt and
+MATHLIVE_LICENSE.txt for the notices associated with those compatibility
+resources.
+
+OFL.txt contains the applicable Excalifont copyright declaration and the SIL
+Open Font License 1.1 terms. The canonical Excalifont reference metadata does
+not itself state a Reserved Font Name determination, so this package makes no
+claim either way beyond preserving the trademark statement above.

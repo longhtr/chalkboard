@@ -1,0 +1,172 @@
+/* Narrow viewport, high zoom, reduced motion, and forced-color adaptations. */
+@media (width <= 900px) {
+  .board-title {
+    display: none;
+  }
+
+  .tool-dock {
+    top: auto;
+    bottom: 64px;
+  }
+
+  .style-panel {
+    top: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (width <= 620px) {
+  .board-route-notice {
+    top: 58px;
+  }
+
+  .account-backdrop {
+    padding: 12px;
+  }
+
+  .account-panel,
+  .local-board-library {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+
+  .local-board-library__entry {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .local-board-library__actions {
+    flex-wrap: wrap;
+  }
+
+  .member-invite {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .invite-link-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .invite-link-row > span {
+    grid-column: 1 / -1;
+  }
+
+  .shortcuts-dialog {
+    padding: 16px;
+  }
+
+  .shortcuts-dialog__sections,
+  .shortcut-section--wide dl {
+    grid-template-columns: 1fr;
+  }
+
+  .shortcut-section--wide {
+    grid-column: auto;
+  }
+
+  .latex-cheatsheet-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 520px) {
+  .simple-color-picker,
+  .simple-color-picker.is-fill-picker {
+    top: calc(100% + 10px);
+    right: auto;
+    bottom: auto;
+    left: 0;
+  }
+
+  .grid-settings-popover {
+    top: calc(100% + 10px);
+    left: 0;
+  }
+}
+
+@media (width <= 560px) {
+  .operation-status {
+    right: 10px;
+    bottom: 122px;
+    width: calc(100vw - 20px);
+  }
+
+  .workspace-top-left {
+    top: 10px;
+    left: 10px;
+  }
+
+  .workspace-top-right {
+    top: 10px;
+    right: 10px;
+    gap: 5px;
+  }
+
+  .workspace-top-right .cloud-status {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    white-space: nowrap;
+  }
+
+  .share-button {
+    min-width: 68px;
+    padding: 9px 10px;
+  }
+
+  .tool-dock {
+    top: auto;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    justify-content: space-around;
+  }
+
+  .zoom-controls,
+  .history-controls {
+    bottom: 72px;
+  }
+
+  .tool-button {
+    width: 35px;
+  }
+
+  .style-panel {
+    width: 204px;
+  }
+
+  .collaborator-avatar,
+  .collaborator-overflow {
+    display: none;
+  }
+}
+
+@media (width <= 420px) {
+  .board-title {
+    width: 88px;
+  }
+
+  .fatal-state {
+    padding: 12px;
+  }
+
+  .fatal-state__card {
+    padding: 22px;
+  }
+
+  .fatal-state__actions {
+    align-items: stretch;
+    flex-direction: column;
+    text-align: center;
+  }
+}

@@ -1,0 +1,24 @@
+# Installed dependencies
+node_modules/
+
+# Generated output and local runtime state
+dist/
+tmp/
+test-results/
+data/
+deploy/runtime/
+*.tsbuildinfo
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/

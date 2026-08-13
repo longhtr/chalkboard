@@ -1,0 +1,70 @@
+# Focused release invariants for deploy/ses-feedback.yaml.
+# The SNS topic intentionally has no KMS key because the operator's cost boundary
+# rejects a recurring customer-managed-key charge and SES feedback contains only
+# bounded provider metadata.
+
+rule application_security_secret_is_retained {
+  Resources.ApplicationSecuritySecret.Type == "AWS::SecretsManager::Secret"
+  Resources.ApplicationSecuritySecret.DeletionPolicy == "Retain"
+  Resources.ApplicationSecuritySecret.UpdateReplacePolicy == "Retain"
+  Resources.ApplicationSecuritySecret.Properties.GenerateSecretString.GenerateStringKey == "admissionHmacKey"
+  Resources.ApplicationSecuritySecret.Properties.KmsKeyId not exists
+  Resources.ApplicationSecuritySecret.Properties.SecretString not exists
+}
+
+rule runtime_policy_is_narrow {
+  Resources.ApplicationRuntimePolicy.Type == "AWS::IAM::Policy"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Sid == "ReadExactApplicationSecuritySecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Action == "secretsmanager:GetSecretValue"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Resource.Ref == "ApplicationSecuritySecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Sid == "SendOnlyFromApprovedIdentityAndAddress"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Action == "ses:SendEmail"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Resource.* == "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SendingIdentityDomain}"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Condition.StringEquals.* == "support@chalkboard.space"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Condition.StringEqualsIfExists not exists
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2].Sid == "UseOnlyApprovedConfigurationSet"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2].Action == "ses:SendEmail"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2].Resource.* == "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/${TransactionalConfigurationSet}"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2].Condition not exists
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][0] == "IncludeSandboxRecipient"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Sid == "UseOnlyVerifiedSandboxRecipient"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Action == "ses:SendEmail"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Resource.* == "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SandboxRecipientEmailIdentity}"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Condition.StringEquals.* == "support@chalkboard.space"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][1].Condition.StringEqualsIfExists not exists
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[3]["Fn::If"][2].Ref == "AWS::NoValue"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[4] not exists
+}
+
+rule sandbox_recipient_is_exact_and_optional {
+  Parameters.SandboxRecipientEmailIdentity.Type == "String"
+  Parameters.SandboxRecipientEmailIdentity.Default == ""
+  Parameters.SandboxRecipientEmailIdentity.MaxLength == 320
+  Parameters.SandboxRecipientEmailIdentity.NoEcho == true
+  Conditions.IncludeSandboxRecipient["Fn::Not"][0]["Fn::Equals"][0].Ref == "SandboxRecipientEmailIdentity"
+  Conditions.IncludeSandboxRecipient["Fn::Not"][0]["Fn::Equals"][1] == ""
+}
+
+rule existing_sending_identity_is_exact {
+  Parameters.SendingIdentityDomain.Type == "String"
+  Parameters.SendingIdentityDomain.AllowedValues[0] == "chalkboard.space"
+  Parameters.SendingIdentityDomain.AllowedValues[1] not exists
+  Parameters.SendingIdentityDomain.Default == "chalkboard.space"
+}
+
+rule configuration_set_disables_engagement {
+  Resources.TransactionalConfigurationSet.Type == "AWS::SES::ConfigurationSet"
+  Resources.TransactionalConfigurationSet.Properties.SendingOptions.SendingEnabled == true
+  Resources.TransactionalConfigurationSet.Properties.VdmOptions.DashboardOptions.EngagementMetrics == "DISABLED"
+  Resources.TransactionalConfigurationSet.Properties.VdmOptions.GuardianOptions.OptimizedSharedDelivery == "DISABLED"
+  Resources.TransactionalConfigurationSet.Properties.TrackingOptions not exists
+}
+
+rule feedback_topic_uses_v2_signatures {
+  Resources.FeedbackTopic.Type == "AWS::SNS::Topic"
+  Resources.FeedbackTopic.Properties.SignatureVersion == "2"
+}
