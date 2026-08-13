@@ -1,0 +1,229 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Chalkboard account-email application secret, exact SES runtime access, and authenticated feedback
+
+Parameters:
+  CreateHttpsSubscription:
+    Type: String
+    AllowedValues:
+      - 'false'
+      - 'true'
+    Default: 'false'
+    Description: Enable only during the approved signed SNS ownership-confirmation window
+  FeedbackEndpoint:
+    Type: String
+    AllowedPattern: '^https://chalkboard\.space/api/email-feedback/ses$'
+    Default: https://chalkboard.space/api/email-feedback/ses
+    Description: Exact public HTTPS endpoint that verifies SNS signatures before processing SES events
+  InstanceRoleName:
+    Type: String
+    AllowedPattern: '^[\w+=,.@-]{1,64}$'
+    Description: Existing EC2 role that receives only exact secret-read and transactional-send access
+  SendingIdentityDomain:
+    Type: String
+    AllowedValues:
+      - chalkboard.space
+    Default: chalkboard.space
+    Description: Existing verified root SES identity used for Chalkboard account-security mail
+  SandboxRecipientEmailIdentity:
+    Type: String
+    AllowedPattern: '^$|^[A-Za-z0-9.!#$%&''+=_`{}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$'
+    Default: ''
+    MaxLength: 320
+    NoEcho: true
+    Description: Exact verified recipient identity required only while this Region remains in the SES sandbox
+
+Conditions:
+  CreateSubscription: !Equals
+    - !Ref CreateHttpsSubscription
+    - 'true'
+  IncludeSandboxRecipient: !Not
+    - !Equals
+      - !Ref SandboxRecipientEmailIdentity
+      - ''
+
+Resources:
+  ApplicationSecuritySecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W77
+            reason: Uses the AWS managed Secrets Manager key; cross-account sharing is neither required nor permitted.
+    Properties:
+      Description: Private Turnstile validation and email-admission key material for Chalkboard
+      GenerateSecretString:
+        ExcludePunctuation: true
+        GenerateStringKey: admissionHmacKey
+        PasswordLength: 48
+        SecretStringTemplate: '{}'
+      Tags:
+        - Key: application
+          Value: chalkboard
+        - Key: purpose
+          Value: application-security
+
+  TransactionalConfigurationSet:
+    Type: AWS::SES::ConfigurationSet
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !Ref AWS::StackName
+      SendingOptions:
+        SendingEnabled: true
+      Tags:
+        - Key: application
+          Value: chalkboard
+        - Key: purpose
+          Value: account-security-email
+      VdmOptions:
+        DashboardOptions:
+          EngagementMetrics: DISABLED
+        GuardianOptions:
+          OptimizedSharedDelivery: DISABLED
+
+  ApplicationRuntimePolicy:
+    Type: AWS::IAM::Policy
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PolicyName: account-email
+      Roles:
+        - !Ref InstanceRoleName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ReadExactApplicationSecuritySecret
+            Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Ref ApplicationSecuritySecret
+          - Sid: SendOnlyFromApprovedIdentityAndAddress
+            Effect: Allow
+            Action: ses:SendEmail
+            Resource: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SendingIdentityDomain}'
+            Condition:
+              StringEquals:
+                ses:FromAddress: support@chalkboard.space
+          - Sid: UseOnlyApprovedConfigurationSet
+            Effect: Allow
+            Action: ses:SendEmail
+            Resource: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/${TransactionalConfigurationSet}'
+          - !If
+            - IncludeSandboxRecipient
+            - Sid: UseOnlyVerifiedSandboxRecipient
+              Effect: Allow
+              Action: ses:SendEmail
+              Resource: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SandboxRecipientEmailIdentity}'
+              Condition:
+                StringEquals:
+                  ses:FromAddress: support@chalkboard.space
+            - !Ref AWS::NoValue
+
+  FeedbackTopic:
+    Type: AWS::SNS::Topic
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W47
+            reason: A customer managed key adds recurring cost; this topic accepts only bounded SES provider metadata from the exact configuration set.
+    Properties:
+      SignatureVersion: '2'
+      Tags:
+        - Key: application
+          Value: chalkboard
+        - Key: purpose
+          Value: transactional-email-feedback
+
+  FeedbackTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowExactSesConfigurationSetToPublish
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref FeedbackTopic
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/${TransactionalConfigurationSet}'
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Topics:
+        - !Ref FeedbackTopic
+
+  FeedbackEventDestination:
+    Type: AWS::SES::ConfigurationSetEventDestination
+    DependsOn: FeedbackTopicPolicy
+    Properties:
+      ConfigurationSetName: !Ref TransactionalConfigurationSet
+      EventDestination:
+        Enabled: true
+        MatchingEventTypes:
+          - SEND
+          - REJECT
+          - BOUNCE
+          - COMPLAINT
+          - DELIVERY
+          - RENDERING_FAILURE
+          - DELIVERY_DELAY
+        Name: authenticated-sns-feedback
+        SnsDestination:
+          TopicARN: !Ref FeedbackTopic
+
+  FeedbackSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: CreateSubscription
+    Properties:
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          backoffFunction: exponential
+          maxDelayTarget: 20
+          minDelayTarget: 1
+          numMaxDelayRetries: 10
+          numMinDelayRetries: 3
+          numNoDelayRetries: 0
+          numRetries: 20
+      Endpoint: !Ref FeedbackEndpoint
+      Protocol: https
+      RawMessageDelivery: false
+      TopicArn: !Ref FeedbackTopic
+
+Outputs:
+  ApplicationSecuritySecretArn:
+    Description: Non-secret ARN consumed only by the approved asm-exec refresh procedure
+    Value: !Ref ApplicationSecuritySecret
+  ConfigurationSetName:
+    Description: Set EMAIL_CONFIGURATION_SET to this value on the server
+    Value: !Ref TransactionalConfigurationSet
+  ApprovedEmailFrom:
+    Description: Exact EMAIL_FROM value approved for the production server
+    Value: Chalkboard <support@chalkboard.space>
+  ApprovedEmailReplyTo:
+    Description: Exact EMAIL_REPLY_TO value approved for the production server
+    Value: support@chalkboard.space
+  FeedbackTopicArn:
+    Description: Set SES_FEEDBACK_TOPIC_ARN to this exact value on the server
+    Value: !Ref FeedbackTopic
+  MailFromMxName:
+    Description: Custom MAIL FROM MX record name for the existing sending identity
+    Value: !Sub 'mail.${SendingIdentityDomain}'
+  MailFromMxValue:
+    Description: Custom MAIL FROM MX record value with priority
+    Value: !Sub '10 feedback-smtp.${AWS::Region}.amazonses.com'
+  MailFromSpfName:
+    Description: Custom MAIL FROM SPF TXT record name for the existing sending identity
+    Value: !Sub 'mail.${SendingIdentityDomain}'
+  MailFromSpfValue:
+    Description: Custom MAIL FROM SPF TXT record value
+    Value: 'v=spf1 include:amazonses.com ~all'
+  SubscriptionArn:
+    Condition: CreateSubscription
+    Description: Confirmed HTTPS subscription ARN, or PendingConfirmation until explicit confirmation succeeds
+    Value: !Ref FeedbackSubscription
+  SendingIdentityArn:
+    Description: Exact existing SES identity ARN used by the application runtime policy
+    Value: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SendingIdentityDomain}'

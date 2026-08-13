@@ -1,0 +1,840 @@
+/* Account modal, route notices, board library, members, invitations, and trash. */
+.development-inbox {
+  width: min(920px, calc(100% - 32px));
+  margin: 40px auto;
+  color: var(--text-body);
+}
+
+.development-inbox > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.development-inbox h1,
+.development-inbox h2,
+.development-inbox p {
+  margin: 0;
+}
+
+.development-inbox header p:last-child {
+  max-width: 680px;
+  margin-top: 8px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.development-inbox button {
+  padding: 9px 14px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.development-inbox ol {
+  display: grid;
+  gap: 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.development-inbox li,
+.development-inbox__empty {
+  padding: 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.development-inbox dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin: 0 0 14px;
+}
+
+.development-inbox dl div {
+  display: grid;
+  gap: 2px;
+}
+
+.development-inbox dt {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.development-inbox dd {
+  margin: 0;
+}
+
+.development-inbox h2 {
+  font-size: 18px;
+}
+
+.development-inbox pre {
+  overflow: auto;
+  margin: 14px 0 0;
+  padding: 16px;
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  white-space: pre-wrap;
+}
+.account-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(var(--shadow-warm) / 24%);
+  backdrop-filter: blur(3px);
+}
+
+.account-panel {
+  width: min(520px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid rgb(var(--shadow-tint) / 10%);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgb(var(--shadow-warm) / 20%);
+  font-size: 15px;
+}
+
+.account-panel--auth {
+  width: min(420px, 100%);
+  padding: 32px;
+}
+
+.account-panel--settings,
+.board-access-panel {
+  width: min(520px, 100%);
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+/* Names the thing being acted on without competing with the panel heading. */
+.account-panel-subject {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.account-header h2 {
+  margin: 3px 0 0;
+  color: var(--text-strong);
+  font-size: 24px;
+}
+
+.account-panel--auth .account-header {
+  margin-bottom: 24px;
+}
+
+/* Sign in, Create account, Reset password, and Choose a demo account are peers
+   in the same flow, so they share one heading treatment rather than drifting. */
+.account-panel--auth .account-header h2,
+.demo-account-header h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+.account-panel--auth .account-close {
+  width: 34px;
+  height: 34px;
+}
+
+.account-kicker {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.account-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.account-panel--auth .account-form {
+  margin-top: 0;
+}
+
+.account-form {
+  display: grid;
+  gap: 15px;
+  margin-top: 18px;
+}
+
+.account-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-body);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.account-form input,
+.account-setting-form input {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface);
+  outline: none;
+  font-size: 16px;
+}
+
+.account-form input:focus,
+.account-setting-form input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(105 101 219 / 13%);
+}
+
+.account-form input[aria-invalid='true'] {
+  border-color: var(--warning-border);
+  background: var(--warning-bg-soft);
+}
+
+.account-field-error {
+  color: var(--warning-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.account-primary {
+  padding: 11px 16px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.account-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.human-verification {
+  display: grid;
+  gap: 6px;
+  min-height: 66px;
+}
+
+.human-verification-error {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.human-verification-error p {
+  margin: 0;
+}
+
+.human-verification-retry {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.human-verification-retry:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.human-verification--development {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  min-height: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  cursor: pointer;
+}
+
+.human-verification--development input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.human-verification--development span {
+  display: grid;
+  gap: 2px;
+}
+
+.human-verification--development small {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.account-mode-switch {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 18px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.account-mode-switch button {
+  padding: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-mode-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-forgot-password {
+  justify-self: end;
+  padding: 0;
+  color: var(--accent-strong);
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.account-form-introduction {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.email-verification,
+.account-notice {
+  display: grid;
+  gap: 8px;
+}
+
+.verification-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.verification-actions button {
+  padding: 6px 0;
+  color: var(--accent-strong);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.account-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  color: var(--text-indigo-muted);
+  font-size: var(--notice-font-size);
+}
+
+.account-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: var(--notice-font-size);
+}
+
+.account-status {
+  display: grid;
+  gap: 5px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  color: var(--text-body);
+  font-size: var(--notice-font-size);
+  line-height: 1.45;
+}
+
+.account-registration-status {
+  margin-bottom: 0;
+}
+
+.account-status .account-inline-link {
+  justify-self: start;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.email-verification-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(var(--shadow-warm) / 34%);
+  backdrop-filter: blur(4px);
+}
+
+.email-verification-dialog {
+  width: min(460px, 100%);
+  max-height: min(680px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid rgb(var(--shadow-tint) / 12%);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 28px 80px rgb(var(--shadow-warm) / 24%);
+  font-size: 15px;
+}
+
+.email-verification-dialog .account-header {
+  margin-bottom: 18px;
+}
+
+.demo-account-backdrop {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(var(--shadow-warm) / 32%);
+  backdrop-filter: blur(4px);
+}
+
+.demo-account-dialog {
+  width: min(600px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgb(var(--shadow-tint) / 12%);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 28px 80px rgb(var(--shadow-warm) / 24%);
+}
+
+.demo-account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.demo-account-warning {
+  display: grid;
+  margin: 18px 0;
+  padding: 11px 13px;
+  gap: 8px;
+  border-radius: 9px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: var(--notice-font-size);
+  line-height: 1.5;
+}
+
+.demo-account-warning p {
+  margin: 0;
+}
+
+.demo-account-list {
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.demo-account-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+
+.demo-account-credentials {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  color: var(--text-muted);
+  font-size: 13.2px;
+}
+
+.demo-account-credentials strong {
+  margin-bottom: 2px;
+  color: var(--text-heading);
+  font-size: 15.4px;
+}
+
+.demo-account-credentials code {
+  color: var(--text-body);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.demo-account-list button {
+  flex: none;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font-size: 13.2px;
+  font-weight: 650;
+}
+
+@media (max-width: 540px) {
+  .email-verification-backdrop,
+  .demo-account-backdrop {
+    padding: 12px;
+  }
+
+  .email-verification-dialog,
+  .demo-account-dialog {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+
+  .demo-account-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .demo-account-list button {
+    width: 100%;
+  }
+}
+
+.account-status strong {
+  color: var(--accent-deeper);
+}
+
+.account-status button {
+  justify-self: center;
+  margin-top: 3px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+/* Both stack full-width sections, so the gap needs a layout that honours it;
+   as plain blocks the declared spacing did nothing and the sign-out button sat
+   flush against the section above it. */
+.account-settings-shell,
+.account-settings {
+  display: grid;
+  width: 100%;
+  gap: 18px;
+}
+
+/* Each section commits with one full-width button, matching the auth form. */
+.account-setting-form .account-primary,
+.account-setting-form button[type='submit'] {
+  width: 100%;
+}
+
+.account-setting-form {
+  display: grid;
+  padding-top: 16px;
+  gap: 11px;
+  border-top: 1px solid var(--surface-sunken);
+}
+
+.account-setting-form:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.account-setting-form > div {
+  display: grid;
+  gap: 3px;
+}
+
+.account-setting-form h3,
+.account-setting-form p {
+  margin: 0;
+}
+
+.account-setting-form h3 {
+  color: var(--text-heading);
+  font-size: 18px;
+}
+
+.account-setting-form p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.account-setting-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-body);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.account-setting-form .account-primary {
+  justify-self: start;
+}
+
+.account-deletion-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.account-deletion-cancel {
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-body);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.account-deletion-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-danger {
+  padding: 11px 16px;
+  border: 1px solid var(--warning-border);
+  border-radius: 9px;
+  color: var(--warning-text);
+  background: var(--warning-bg-soft);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.account-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-sign-out {
+  justify-self: start;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.account-sign-out:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.board-access-summary {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  color: var(--text-body);
+}
+
+.board-access-summary p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.board-access-panel .member-manager {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+.member-manager {
+  margin-top: 4px;
+}
+
+.member-row,
+.member-invite {
+  display: flex;
+  align-items: center;
+}
+
+.member-invite {
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.invite-link-manager {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.invite-link-manager .member-role-help {
+  margin: 0 0 2px;
+}
+
+.invite-link-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto auto;
+  gap: 7px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+
+.invite-link-row > span {
+  display: grid;
+  min-width: 0;
+}
+
+.invite-link-row > span > strong::first-letter {
+  text-transform: uppercase;
+}
+
+.invite-link-row small {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: none;
+}
+
+.invite-link-row button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--accent-tint);
+  color: var(--accent-deep);
+  cursor: pointer;
+}
+
+.invite-link-row .invite-link-revoke {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.member-invite input,
+.member-invite select,
+.member-row select {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.member-invite input {
+  flex: 1;
+}
+
+.member-role-help {
+  margin: -4px 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.member-list {
+  display: grid;
+  gap: 7px;
+}
+
+.member-row {
+  gap: 9px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+
+.member-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--border-accent);
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.member-details {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.member-details small {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+}
+
+.member-role-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.member-remove {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  cursor: pointer;
+  font-size: 18px;
+}
