@@ -1,0 +1,37 @@
+KaTeX/MathLive compatibility font template notice
+
+The MathLive 0.110.0 KaTeX-compatible font templates used by this repository
+contain the following upstream metadata:
+
+Copyright (c) 2009-2010, Design Science, Inc. (<www.mathjax.org>)
+Copyright (c) 2014-2018 Khan Academy (<www.khanacademy.org>)
+
+The template metadata declares these Reserved Font Names:
+
+KaTeX_AMS
+KaTeX_Caligraphic
+KaTeX_Fraktur
+KaTeX_Main
+KaTeX_Math
+KaTeX_SansSerif
+KaTeX_Script
+KaTeX_Size1
+KaTeX_Size2
+KaTeX_Size3
+KaTeX_Size4
+KaTeX_Typewriter
+
+The template metadata states:
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+
+The complete SIL Open Font License 1.1 terms are included in OFL.txt. The
+adapter does not redistribute the template font outlines. It uses their cmap
+and metric information for MathLive 0.110.0 interoperability.
+
+To preserve the declared Reserved Font Names, the delivered adapter binaries
+use internal primary family names beginning with “Excalifont Extended ML”. The KaTeX_*
+strings remain only as MathLive-required CSS aliases, filenames, manifest
+keys, and font-map compatibility identifiers.

@@ -1,0 +1,42 @@
+{
+  "elements": [
+    {
+      "id": "legacy-cloud-equation",
+      "value": {
+        "backgroundColor": "transparent",
+        "createdBy": "legacy-cloud",
+        "fontSize": 25,
+        "height": 48,
+        "id": "legacy-cloud-equation",
+        "latex": "x^2+y^2",
+        "opacity": 1,
+        "rotation": 0,
+        "strokeColor": "#1f2937",
+        "strokeWidth": 2,
+        "type": "equation",
+        "width": 180,
+        "x": 180,
+        "y": 20
+      }
+    },
+    {
+      "id": "legacy-cloud-rectangle",
+      "value": {
+        "backgroundColor": "transparent",
+        "createdBy": "legacy-cloud",
+        "height": 80,
+        "id": "legacy-cloud-rectangle",
+        "opacity": 1,
+        "rotation": 0,
+        "strokeColor": "#1f2937",
+        "strokeWidth": 2,
+        "type": "rectangle",
+        "width": 120,
+        "x": 10,
+        "y": 20
+      }
+    }
+  ],
+  "order": ["legacy-cloud-rectangle", "legacy-cloud-equation"],
+  "title": "Retained cloud v0 board"
+}

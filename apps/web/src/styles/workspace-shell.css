@@ -1,0 +1,563 @@
+/* Full-screen editor shell, top bar, canvas surface, statuses, and transient notices. */
+.workspace {
+  --panel-border: rgb(var(--shadow-tint) / 10%);
+  --panel-shadow: var(--shadow-panel);
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+  background: var(--canvas-paper);
+  user-select: none;
+}
+
+.canvas-viewport {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+
+  /*
+   * `hidden` still makes this a scroll container, so focusing the caret inside
+   * a block taller than the window made the browser scroll it to reveal the
+   * caret. That moved the DOM layer out from under the canvas the user clicked
+   * on: the view jumped with no input, and every later click resolved against
+   * stale coordinates, dropping the caret lines away from the pointer.
+   *
+   * `clip` produces the same painting with no scroll container at all, so
+   * nothing - focus, scroll-into-view, or script - can shift it. `hidden`
+   * stays first as the fallback for engines without `clip`.
+   */
+  overflow: hidden;
+  overflow: clip;
+  background: var(--canvas-paper);
+}
+
+.canvas-layer,
+.content-layer-stack,
+.dom-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+}
+
+.canvas-layer,
+.content-layer-run {
+  display: block;
+}
+
+.grid-layer,
+.content-layer,
+.content-layer-stack,
+.dom-layer {
+  pointer-events: none;
+}
+
+.grid-layer {
+  z-index: 0;
+}
+
+.content-layer-stack {
+  z-index: 1;
+  isolation: isolate;
+}
+
+.content-layer-run {
+  position: absolute;
+}
+
+.interaction-layer {
+  z-index: 2;
+  outline: none;
+  touch-action: none;
+}
+
+.dom-layer {
+  z-index: 3;
+}
+
+.workspace.is-read-only .style-panel,
+.workspace.is-read-only .history-controls {
+  pointer-events: none;
+}
+
+.workspace.is-read-only .style-panel,
+.workspace.is-read-only .history-controls {
+  opacity: 0.55;
+}
+
+.workspace.is-read-only .board-title {
+  cursor: default;
+}
+
+.canvas-viewport.is-selecting .interaction-layer {
+  cursor: default;
+}
+
+.canvas-viewport.is-crosshair .interaction-layer {
+  cursor: crosshair;
+}
+
+.canvas-viewport.is-text .interaction-layer {
+  cursor: text;
+}
+
+.canvas-viewport.is-grab .interaction-layer {
+  cursor: grab;
+}
+
+.canvas-viewport.is-grabbing .interaction-layer {
+  cursor: grabbing;
+}
+
+.canvas-viewport.is-move .interaction-layer {
+  cursor: move;
+}
+
+.canvas-viewport.is-resizing-north-west .interaction-layer,
+.canvas-viewport.is-resizing-south-east .interaction-layer {
+  cursor: nwse-resize;
+}
+
+.canvas-viewport.is-resizing-north-east .interaction-layer,
+.canvas-viewport.is-resizing-south-west .interaction-layer {
+  cursor: nesw-resize;
+}
+
+.canvas-viewport.is-resizing-north .interaction-layer,
+.canvas-viewport.is-resizing-south .interaction-layer {
+  cursor: ns-resize;
+}
+
+.canvas-viewport.is-resizing-east .interaction-layer,
+.canvas-viewport.is-resizing-west .interaction-layer {
+  cursor: ew-resize;
+}
+
+.workspace-top-left,
+.workspace-top-right,
+.tool-dock,
+.style-panel,
+.zoom-controls,
+.history-controls {
+  position: absolute;
+  z-index: 10;
+}
+
+.workspace-top-left {
+  z-index: 20;
+  top: 16px;
+  left: 16px;
+}
+
+.board-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button,
+.tool-button,
+.zoom-controls button,
+.history-controls button {
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.icon-button:hover,
+.tool-button:hover,
+.zoom-controls button:hover,
+.history-controls button:hover {
+  background: var(--accent-tint);
+}
+
+.icon-button:focus-visible,
+.tool-button:focus-visible,
+.zoom-controls button:focus-visible,
+.history-controls button:focus-visible,
+.share-button:focus-visible,
+.board-title:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.menu-button {
+  width: 42px;
+  height: 42px;
+  border-color: var(--panel-border);
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+  font-size: 18px;
+}
+
+.board-title {
+  width: min(220px, 24vw);
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 650;
+  user-select: text;
+}
+
+.board-title:hover,
+.board-title:focus {
+  border-color: var(--panel-border);
+  background: var(--overlay-veil);
+}
+
+.board-title:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.board-menu {
+  position: relative;
+  display: flex;
+  width: 210px;
+  margin-top: 10px;
+  padding: 8px;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+}
+
+.board-menu .menu-item {
+  display: grid;
+  padding: 10px;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.board-menu .menu-item:hover {
+  background: var(--surface-neutral);
+}
+
+.board-menu .menu-item.is-open {
+  background: var(--accent-tint);
+}
+
+.board-menu-separator {
+  display: block;
+  height: 1px;
+  margin: 3px 4px;
+  background: var(--surface-sunken);
+}
+
+.board-menu-submenu {
+  position: relative;
+}
+
+.board-menu-submenu > .menu-item {
+  width: 100%;
+}
+
+.new-board-popover,
+.clear-canvas-popover,
+.grid-settings-popover {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 10px);
+  z-index: 2;
+  width: 210px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+}
+
+.new-board-popover,
+.clear-canvas-popover {
+  display: grid;
+  gap: 6px;
+}
+
+.new-board-popover button {
+  display: grid;
+  padding: 10px;
+  gap: 3px;
+  border-radius: 7px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.new-board-popover button:hover {
+  background: var(--surface-neutral);
+}
+
+.new-board-popover span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.clear-canvas-popover {
+  color: var(--text-body);
+}
+
+.clear-canvas-popover > strong {
+  padding: 2px 4px 0;
+  color: var(--warning-text-deep);
+  font-size: 14px;
+}
+
+.clear-canvas-popover p {
+  margin: 0;
+  padding: 0 4px 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.clear-canvas-popover__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.clear-canvas-popover__actions button {
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-plum);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.clear-canvas-popover__actions button:hover {
+  border-color: var(--accent-pale);
+  background: var(--surface-subtle);
+}
+
+.clear-canvas-popover__actions button.is-danger {
+  border-color: var(--warning-border);
+  color: var(--warning-text-deep);
+  background: var(--warning-bg);
+}
+
+.grid-popover-header {
+  display: grid;
+  padding: 2px 8px 6px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-subpanel-title {
+  color: var(--text-body-strong);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.board-menu-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.board-menu-switch[aria-checked='true'] {
+  background: var(--accent);
+}
+
+.board-menu-switch span {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(var(--shadow-warm) / 28%);
+  inset: 2px auto auto 2px;
+  transition: transform 120ms ease;
+}
+
+.board-menu-switch[aria-checked='true'] span {
+  transform: translateX(14px);
+}
+
+.board-menu .menu-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.board-menu .menu-disclosure [aria-hidden='true'] {
+  font-size: 16px;
+  line-height: 0;
+}
+
+.board-menu .menu-item--danger:hover {
+  color: var(--warning-text-deep);
+  background: var(--warning-bg);
+}
+
+.board-menu-setting {
+  display: grid;
+  padding: 6px 10px 8px;
+  gap: 12px;
+  color: var(--text-body);
+  font-size: 13px;
+}
+
+.board-menu-setting__control {
+  display: grid;
+  gap: 7px;
+}
+
+.board-menu-setting__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.board-menu-setting output {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-menu-setting input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.board-choice-setting {
+  display: grid;
+  padding: 6px 8px 8px;
+  gap: 7px;
+}
+
+/* Segmented control shared by the font and theme submenus; columns follow the
+   number of options rather than being fixed at two. */
+.board-choice-options {
+  display: grid;
+  padding: 2px;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  border-radius: 7px;
+  background: var(--surface-neutral);
+}
+
+.board-choice-option {
+  min-height: 30px;
+  padding: 0 6px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.board-choice-option:hover,
+.board-choice-option:focus-visible {
+  color: var(--accent-deep);
+  background: var(--surface-raised);
+}
+
+.board-choice-option.is-active {
+  color: var(--accent-deep);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgb(55 48 107 / 14%);
+}
+
+/* One anchor for every transient notice, so two of them showing at once stack
+   instead of landing on top of each other. */
+.status-stack {
+  position: fixed;
+  z-index: 70;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  /* The stack spans the corner; only the notices themselves take clicks. */
+  pointer-events: none;
+}
+
+.status-stack > * {
+  pointer-events: auto;
+}
+
+.operation-status {
+  display: flex;
+  width: min(420px, calc(100vw - 32px));
+  min-height: 48px;
+  padding: 12px 14px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  background: var(--overlay-surface);
+  box-shadow: 0 12px 34px rgb(var(--shadow-warm) / 16%);
+  font-size: var(--notice-font-size);
+  line-height: 1.45;
+  user-select: text;
+}
+
+.operation-status > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.operation-status__action {
+  min-height: 30px;
+  padding: 4px 9px;
+  flex: 0 0 auto;
+  border: 1px solid var(--warning-border);
+  border-radius: 7px;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.operation-status__action:hover {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+}
+
+.operation-status.is-error {
+  border-color: var(--warning-border);
+  color: var(--warning-text-deep);
+  background: var(--overlay-warning);
+  box-shadow: 0 12px 34px rgb(93 65 0 / 14%);
+}
+
+.board-menu kbd {
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 500;
+}

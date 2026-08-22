@@ -1,0 +1,257 @@
+/* Primary tool dock, active states, keyboard hints, and reorder mode. */
+.tool-dock {
+  display: flex;
+  top: 14px;
+  left: 50%;
+  height: 50px;
+  padding: 5px;
+  align-items: center;
+  gap: 2px;
+  transform: translateX(-50%);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+}
+
+.tool-button {
+  position: relative;
+  width: 39px;
+  height: 39px;
+  font-size: 19px;
+}
+
+.tool-button.is-active {
+  color: var(--accent-strong);
+  background: var(--accent-tint-strong);
+}
+
+.tool-button[data-toolbar-tool] {
+  touch-action: none;
+  cursor: grab;
+}
+
+.tool-button.is-dragging {
+  opacity: 0.35;
+  cursor: grabbing;
+}
+
+.tool-button.is-drop-target {
+  box-shadow: inset 0 0 0 2px var(--accent-pale);
+}
+
+.tool-button:disabled,
+.history-controls button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.tool-button:disabled:hover,
+.history-controls button:disabled:hover {
+  background: transparent;
+}
+
+.tool-divider {
+  width: 1px;
+  height: 25px;
+  margin: 0 3px;
+  background: var(--border-neutral);
+}
+
+.mixed-text-tool-mode {
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.tool-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tool-shortcut {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.tool-button.is-active .tool-shortcut {
+  color: var(--accent-mid);
+}
+
+.workspace-top-right {
+  display: flex;
+  top: 16px;
+  right: 16px;
+  align-items: center;
+  gap: 9px;
+}
+
+.cloud-status {
+  padding: 10px 15px;
+  border: 1px solid var(--border-accent);
+  border-radius: 9px;
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.cloud-status.is-reconnecting,
+.cloud-status.is-syncing,
+.cloud-status.is-incompatible,
+.cloud-recovery-status,
+.cloud-retry {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.cloud-status.is-disconnected,
+.cloud-status.is-blocked {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.cloud-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.cloud-status-dot.is-connected,
+.cloud-status-dot.is-synced {
+  background: var(--success-dot);
+}
+
+.cloud-status-dot.is-reconnecting,
+.cloud-status-dot.is-syncing {
+  background: var(--warning-dot);
+}
+
+.cloud-status-dot.is-disconnected,
+.cloud-status-dot.is-blocked {
+  background: var(--danger);
+}
+
+.cloud-retry {
+  cursor: pointer;
+  font: inherit;
+}
+
+.share-button {
+  min-width: 76px;
+  padding: 10px 15px;
+  border-radius: 9px;
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow: 0 2px 8px rgb(105 101 219 / 24%);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.share-button:hover {
+  background: var(--accent-hover);
+}
+
+.avatar {
+  display: grid;
+  width: 37px;
+  height: 37px;
+  place-items: center;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  color: var(--accent-deep);
+  background: var(--border-accent);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar:hover {
+  background: var(--accent-tint-hover);
+}
+
+/* Signed in, the avatar reads as a filled identity chip carrying the account
+   initial, so it is distinguishable from the anonymous glyph at a glance. */
+.avatar.is-signed-in {
+  border-color: transparent;
+  color: var(--on-accent);
+  background: var(--accent);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.avatar.is-signed-in:hover {
+  background: var(--accent-hover);
+}
+
+.collaborator-avatar {
+  margin-right: -16px;
+  color: var(--on-accent);
+  pointer-events: auto;
+  cursor: default;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+.collaborator-selection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Square, matching the local selection drawn by `drawSelectionBounds`. */
+  border: 2px solid;
+  transform-origin: top left;
+}
+
+.collaborator-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  transform-origin: top left;
+  white-space: nowrap;
+}
+
+.collaborator-cursor-pointer {
+  font-size: 15px;
+  line-height: 1;
+  transform: rotate(-35deg);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 22%));
+}
+
+.collaborator-cursor-name {
+  margin-top: 9px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.collaborator-overflow {
+  display: grid;
+  min-width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 700;
+}
