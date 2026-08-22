@@ -1,0 +1,30 @@
+Excalifont (extended) Chalkboard MathLive adapter FONTLOG
+
+Adapter version: 0.1.0
+Excalifont (extended) version: 0.1.0
+MathLive compatibility: 0.110.0
+Release provenance: 0.1.0
+
+Compatibility decisions
+- MathLive is pinned to exactly 0.110.0. No other MathLive release is certified.
+- The KaTeX_* names are CSS/runtime compatibility identifiers. To preserve the
+  template fonts' declared Reserved Font Names, delivered binaries use internal
+  primary family names beginning with Excalifont Extended ML.
+- All delivered glyph outlines are generated from Excalifont sources.
+- Ordinary glyphs retain Excalifont's native outlines, advances, and vertical
+  metrics exactly. Only MathLive's split radical pieces and extensible delimiter
+  attachment zones are fitted to compatibility assembly boxes.
+- Adapter 0.1.0 uses the 0.1.0 CSS cache token on every face URL.
+- KaTeX_Main includes Excalifont's complete BMP text-release cmap in all four
+  declared faces for mixed prose, Extended Latin, Vietnamese, Greek, marks,
+  punctuation, symbols, spacing, and joining controls.
+- Outline-equivalent OTF/TTF files accompany every WOFF2 face for vector export.
+
+Release history
+- 0.1.0: Initial public adapter release. It includes native ordinary
+  outlines and metrics, compatibility-fitted radicals and Size4 delimiters,
+  the refined capital H, i, letter-dot, comma, semicolon, and low-quote families,
+  all 20 browser/export faces, mixed-text support, Chromium/Firefox certification,
+  deterministic packaging, and portable checksums.
+
+See README.md for provenance and license details.

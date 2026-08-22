@@ -1,0 +1,284 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm audit --prod --audit-level high
+
+  e2e:
+    runs-on: ubuntu-latest
+    # The complete dual-engine matrix runs close to 15 minutes; retain a hard
+    # ceiling while leaving enough runner-variance headroom to finish cleanup.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install --with-deps chromium firefox
+      - run: pnpm test:e2e
+
+  cloud-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+        env:
+          POSTGRES_DB: chalkboard_cloud_e2e
+          POSTGRES_PASSWORD: chalkboard
+          POSTGRES_USER: chalkboard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chalkboard -d chalkboard_cloud_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://chalkboard:chalkboard@127.0.0.1:5432/chalkboard_cloud_e2e
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install --with-deps chromium
+      - run: pnpm test:e2e:cloud
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+        env:
+          POSTGRES_DB: chalkboard_test
+          POSTGRES_PASSWORD: chalkboard
+          POSTGRES_USER: chalkboard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chalkboard -d chalkboard_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://chalkboard:chalkboard@127.0.0.1:5432/chalkboard_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:integration
+
+  # Builds and boots both deployable artifacts on the same Arm64 architecture
+  # as production. This catches missing runtime files, workspace imports, nginx
+  # failures, and architecture drift before a release reaches the host.
+  image:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+        env:
+          POSTGRES_DB: chalkboard_image
+          POSTGRES_PASSWORD: chalkboard
+          POSTGRES_USER: chalkboard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chalkboard -d chalkboard_image"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://chalkboard:chalkboard@127.0.0.1:5432/chalkboard_image
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build both Arm64 production images
+        run: |
+          docker build -f apps/server/Dockerfile \
+            --build-arg VCS_REF="${{ github.sha }}" \
+            -t chalkboard-server:ci .
+          docker build -f apps/web/Dockerfile \
+            --build-arg VCS_REF="${{ github.sha }}" \
+            -t chalkboard-web:ci .
+          for image in chalkboard-server:ci chalkboard-web:ci; do
+            test "$(docker image inspect "$image" --format '{{.Architecture}}')" = arm64
+            test "$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "${{ github.sha }}"
+          done
+      - name: Materialize injected application security for the runtime UID
+        run: |
+          runtime_identity="$(docker run --rm --entrypoint node \
+            chalkboard-server:ci \
+            -p '`${process.getuid()}:${process.getgid()}`')"
+          runtime_uid="${runtime_identity%:*}"
+          runtime_gid="${runtime_identity#*:}"
+          admission_key="$(openssl rand -hex 32)"
+          turnstile_secret="$(openssl rand -hex 24)"
+          resend_api_key="re_ci_$(openssl rand -hex 16)"
+          resend_webhook_secret="whsec_$(openssl rand -base64 32 | tr -d '\n')"
+          sudo env \
+            CHALKBOARD_MATERIALIZED_ADMISSION_HMAC_KEY="$admission_key" \
+            CHALKBOARD_MATERIALIZED_TURNSTILE_SECRET="$turnstile_secret" \
+            CHALKBOARD_MATERIALIZED_RESEND_API_KEY="$resend_api_key" \
+            CHALKBOARD_MATERIALIZED_RESEND_WEBHOOK_SECRET="$resend_webhook_secret" \
+            PATH="$PATH" \
+            node deploy/materialize-application-security.mjs \
+              --cache-dir "$GITHUB_WORKSPACE/tmp/ci-application-security" \
+              --generation 1 \
+              --runtime-uid "$runtime_uid" \
+              --runtime-gid "$runtime_gid"
+          test "$(sudo stat -c '%u:%g' "$GITHUB_WORKSPACE/tmp/ci-application-security")" = "0:0"
+          test "$(sudo stat -c '%a' "$GITHUB_WORKSPACE/tmp/ci-application-security")" = 700
+          for file in admission-hmac-key admission-hmac-key-generation turnstile-secret resend-api-key resend-webhook-secret; do
+            test "$(sudo stat -c '%u:%g' "$GITHUB_WORKSPACE/tmp/ci-application-security/current/$file")" = "$runtime_identity"
+            test "$(sudo stat -c '%a' "$GITHUB_WORKSPACE/tmp/ci-application-security/current/$file")" = 600
+          done
+      - name: Apply migrations with only DATABASE_URL
+        run: |
+          docker run --rm --network host -e DATABASE_URL="$DATABASE_URL" \
+            chalkboard-server:ci node dist/migrate.js
+      - name: Seed public demo accounts with only DATABASE_URL
+        run: |
+          docker run --rm --network host -e DATABASE_URL="$DATABASE_URL" \
+            chalkboard-server:ci node dist/seed-demo-accounts.js
+      - name: Start the server
+        run: |
+          docker run -d --name chalkboard-ci --network host \
+            -e ACCOUNT_REGISTRATION_LIMIT=10 \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e EMAIL_DAILY_SEND_LIMIT=10 \
+            -e EMAIL_FROM=accounts@example.com \
+            -e EMAIL_MONTHLY_SEND_LIMIT=100 \
+            -e EMAIL_REPLY_TO=support@example.com \
+            -e PORT=3000 \
+            -e PUBLIC_ORIGIN=http://127.0.0.1:3000 \
+            -e TURNSTILE_SITE_KEY=1x00000000000000000000AA \
+            -v "$GITHUB_WORKSPACE/tmp/ci-application-security/current/admission-hmac-key:/run/secrets/admission-hmac-key:ro" \
+            -v "$GITHUB_WORKSPACE/tmp/ci-application-security/current/admission-hmac-key-generation:/run/secrets/admission-hmac-key-generation:ro" \
+            -v "$GITHUB_WORKSPACE/tmp/ci-application-security/current/turnstile-secret:/run/secrets/turnstile-secret:ro" \
+            -v "$GITHUB_WORKSPACE/tmp/ci-application-security/current/resend-api-key:/run/secrets/resend-api-key:ro" \
+            -v "$GITHUB_WORKSPACE/tmp/ci-application-security/current/resend-webhook-secret:/run/secrets/resend-webhook-secret:ro" \
+            chalkboard-server:ci
+      - name: Wait for readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/health/ready | grep -q '"status":"ready"' && \
+               curl -fsS http://127.0.0.1:3000/api/diagnostics | grep -q '"material":"materialized"'; then
+              echo "Server reported ready with materialized application security"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server never became ready"
+          docker logs chalkboard-ci
+          exit 1
+      - name: Start and verify the web image
+        run: |
+          docker run -d --name chalkboard-web-ci -p 8080:8080 \
+            --add-host server:host-gateway chalkboard-web:ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/ >/dev/null && \
+               curl -fsS http://127.0.0.1:8080/health/live | grep -q '"status":"ok"'; then
+              echo "Web image served the SPA and proxied Fastify"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Web image never became ready"
+          docker logs chalkboard-web-ci
+          exit 1
+      - name: Restart with the unchanged materialized cache
+        run: |
+          docker restart chalkboard-ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/health/ready | grep -q '"status":"ready"' && \
+               curl -fsS http://127.0.0.1:3000/api/diagnostics | grep -q '"material":"materialized"' && \
+               curl -fsS http://127.0.0.1:8080/health/live | grep -q '"status":"ok"'; then
+              echo "Server restart reused the complete materialized cache"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server did not recover with materialized application security"
+          docker logs chalkboard-ci
+          exit 1
+      - name: Refuse a second instance
+        run: |
+          # The runtime advisory lock is what makes in-process room ownership and
+          # rate-limit counters correct; prove it still rejects a second server.
+          # A distinct port keeps a port clash from passing this for the wrong
+          # reason, and the message is asserted rather than just the exit code.
+          if docker run --rm --network host \
+            -e ACCOUNT_REGISTRATION_LIMIT=10 \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e EMAIL_DAILY_SEND_LIMIT=10 \
+            -e EMAIL_FROM=accounts@example.com \
+            -e EMAIL_MONTHLY_SEND_LIMIT=100 \
+            -e EMAIL_REPLY_TO=support@example.com \
+            -e PORT=3001 \
+            -e PUBLIC_ORIGIN=http://127.0.0.1:3001 \
+            -e TURNSTILE_SITE_KEY=1x00000000000000000000AA \
+            chalkboard-server:ci >second-instance.log 2>&1; then
+            echo "A second instance started while the runtime lock was held"
+            cat second-instance.log
+            exit 1
+          fi
+          if ! grep -q "holds the production runtime lock" second-instance.log; then
+            echo "The second instance failed for some other reason:"
+            cat second-instance.log
+            exit 1
+          fi
+      - name: Show container logs
+        if: always()
+        run: |
+          docker logs chalkboard-ci || true
+          docker logs chalkboard-web-ci || true
+      - name: Stop containers and remove injected material
+        if: always()
+        run: |
+          docker rm -f chalkboard-web-ci || true
+          docker rm -f chalkboard-ci || true
+          sudo rm -rf "$GITHUB_WORKSPACE/tmp/ci-application-security"
+          rm -f second-instance.log

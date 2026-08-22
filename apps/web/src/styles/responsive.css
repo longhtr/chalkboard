@@ -1,0 +1,536 @@
+/* Narrow viewport, high zoom, reduced motion, and forced-color adaptations. */
+@media (width <= 900px) {
+  .board-title {
+    display: none;
+  }
+
+  .tool-dock {
+    top: auto;
+    bottom: 64px;
+  }
+
+  .style-panel {
+    top: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (width <= 620px) {
+  .account-backdrop {
+    padding: 12px;
+  }
+
+  .account-panel,
+  .local-board-library {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+
+  .local-board-library__entry {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .local-board-library__actions {
+    flex-wrap: wrap;
+  }
+
+  .member-invite {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .invite-link-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .invite-link-row > span {
+    grid-column: 1 / -1;
+  }
+
+  .shortcuts-dialog {
+    padding: 16px;
+  }
+
+  .shortcuts-dialog__sections,
+  .shortcut-section--wide dl {
+    grid-template-columns: 1fr;
+  }
+
+  .shortcut-section--wide {
+    grid-column: auto;
+  }
+
+  .latex-cheatsheet-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 520px) {
+  .simple-color-picker,
+  .simple-color-picker.is-fill-picker {
+    top: calc(100% + 10px);
+    right: auto;
+    bottom: auto;
+    left: 0;
+  }
+
+  .grid-settings-popover {
+    top: calc(100% + 10px);
+    left: 0;
+  }
+}
+
+@media (width <= 560px) {
+  .status-stack {
+    right: 10px;
+    bottom: 122px;
+  }
+
+  .operation-status {
+    width: calc(100vw - 20px);
+  }
+
+  .workspace-top-left {
+    top: 10px;
+    left: 10px;
+  }
+
+  .workspace-top-right {
+    top: 10px;
+    right: 10px;
+    gap: 5px;
+  }
+
+  .workspace-top-right .cloud-status {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    white-space: nowrap;
+  }
+
+  .share-button {
+    min-width: 68px;
+    padding: 9px 10px;
+  }
+
+  .tool-dock {
+    top: auto;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    justify-content: space-around;
+  }
+
+  .zoom-controls,
+  .history-controls {
+    bottom: 72px;
+  }
+
+  .tool-button {
+    width: 35px;
+  }
+
+  .style-panel {
+    width: 204px;
+  }
+
+  .collaborator-avatar,
+  .collaborator-overflow {
+    display: none;
+  }
+}
+
+@media (width <= 420px) {
+  .board-title {
+    width: 88px;
+  }
+
+  .fatal-state {
+    padding: 12px;
+  }
+
+  .fatal-state__card {
+    padding: 22px;
+  }
+
+  .fatal-state__actions {
+    align-items: stretch;
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Phone layout only. Input, camera, persistence, and board behavior stay in
+   their existing owners; these rules change the size and placement of chrome. */
+@media (width <= 600px) {
+  .workspace-top-left {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+  }
+
+  .workspace-top-right {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    gap: 6px;
+  }
+
+  .menu-button,
+  .avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .workspace-top-right .cloud-status {
+    position: static;
+    max-width: 132px;
+    padding: 8px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .workspace-top-right .cloud-status.is-local {
+    display: none;
+  }
+
+  .share-button {
+    min-width: 66px;
+    min-height: 42px;
+    padding: 7px 10px;
+  }
+
+  .collaborator-avatar,
+  .collaborator-overflow {
+    display: none;
+  }
+
+  .tool-dock {
+    top: auto;
+    right: auto;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 50%;
+    width: max-content;
+    max-width: calc(100% - 16px);
+    height: 52px;
+    padding: 5px;
+    justify-content: flex-start;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    transform: translateX(-50%);
+  }
+
+  .tool-dock::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-button {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .tool-divider {
+    flex: 0 0 1px;
+  }
+
+  .tool-shortcut {
+    display: none;
+  }
+
+  .zoom-controls,
+  .history-controls {
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 60px);
+    height: 42px;
+    padding: 2px;
+  }
+
+  .zoom-controls {
+    left: max(8px, env(safe-area-inset-left));
+  }
+
+  .history-controls {
+    left: calc(max(8px, env(safe-area-inset-left)) + 128px);
+  }
+
+  .zoom-controls button,
+  .history-controls button {
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .zoom-controls .zoom-value {
+    width: 46px;
+  }
+
+  .style-panel {
+    z-index: 30;
+    top: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 60px);
+    left: auto;
+    width: 74px;
+    max-height: calc(
+      100dvh - max(8px, env(safe-area-inset-top)) -
+        max(8px, env(safe-area-inset-bottom)) - 60px
+    );
+    padding: 0;
+    overflow: hidden;
+    gap: 0;
+    border-radius: 12px;
+  }
+
+  .style-panel.is-open {
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
+  }
+
+  .style-panel__toggle {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-body-strong);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .style-panel__disclosure {
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  .style-panel__content {
+    display: none;
+    min-height: 0;
+    padding: 4px 10px max(12px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 8px;
+    overscroll-behavior: contain;
+  }
+
+  .style-panel.is-open .style-panel__content {
+    display: flex;
+  }
+
+  .style-panel button:not(.style-panel__toggle),
+  .style-panel select {
+    min-height: 36px;
+  }
+
+  .style-panel .swatches {
+    grid-template-columns: repeat(5, 36px);
+    gap: 7px;
+  }
+
+  .style-panel .color-swatch-item,
+  .style-panel .swatch,
+  .style-panel .add-color-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .style-panel .simple-color-picker,
+  .style-panel .simple-color-picker.is-fill-picker {
+    position: static;
+    width: 100%;
+    max-width: none;
+  }
+
+  .style-panel input,
+  .style-panel select {
+    font-size: 16px;
+  }
+
+  .status-stack {
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 114px);
+    left: max(8px, env(safe-area-inset-left));
+    align-items: stretch;
+  }
+
+  .operation-status {
+    width: 100%;
+  }
+
+  .board-menu {
+    position: fixed;
+    top: calc(max(8px, env(safe-area-inset-top)) + 50px);
+    right: max(8px, env(safe-area-inset-right));
+    bottom: auto;
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
+    height: auto;
+    max-height: calc(
+      100dvh - max(8px, env(safe-area-inset-top)) -
+        max(8px, env(safe-area-inset-bottom)) - 118px
+    );
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .board-menu .menu-item {
+    min-height: 42px;
+  }
+
+  .new-board-popover,
+  .clear-canvas-popover,
+  .grid-settings-popover {
+    position: static;
+    width: 100%;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+
+  .new-board-popover button,
+  .clear-canvas-popover__actions button,
+  .board-choice-option {
+    min-height: 42px;
+  }
+
+  .object-navigator {
+    position: absolute;
+    top: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
+    height: auto;
+    max-height: calc(
+      100dvh - max(16px, env(safe-area-inset-top)) -
+        max(8px, env(safe-area-inset-bottom))
+    );
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .object-navigator__header {
+    padding-bottom: 8px;
+  }
+
+  .object-navigator__search,
+  .object-navigator__sort {
+    margin-bottom: 8px;
+  }
+
+  .object-navigator__list {
+    padding-block: 3px;
+    flex-basis: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .object-navigator__list button {
+    padding: 7px;
+  }
+
+  .object-navigator__order,
+  .object-navigator__footer {
+    margin-top: 8px;
+  }
+
+  .object-navigator__close,
+  .object-navigator__search input,
+  .object-navigator__sort button,
+  .object-navigator__footer button,
+  .object-navigator__order-actions button {
+    min-height: 44px;
+  }
+
+  .object-navigator__close {
+    width: 44px;
+  }
+
+  .object-navigator__search input {
+    font-size: 16px;
+  }
+
+  .dialog-backdrop,
+  .account-backdrop {
+    padding: max(8px, env(safe-area-inset-top)) 0 0;
+    place-items: end center;
+  }
+
+  .shortcuts-dialog,
+  .export-dialog,
+  .account-panel,
+  .local-board-library {
+    width: 100%;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)));
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .account-panel,
+  .account-panel--auth,
+  .local-board-library,
+  .shortcuts-dialog,
+  .export-dialog {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .shortcuts-dialog__close,
+  .local-board-library__header > button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .export-dialog__actions button,
+  .account-panel button,
+  .local-board-library button {
+    min-height: 42px;
+  }
+
+  .export-padding__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-panel input,
+  .account-panel select,
+  .local-board-library input,
+  .export-dialog input,
+  .export-dialog select,
+  .latex-cheatsheet-search input {
+    font-size: 16px;
+  }
+}
+
+@media (width <= 340px) {
+  .history-controls {
+    left: calc(max(8px, env(safe-area-inset-left)) + 120px);
+  }
+
+  .zoom-controls button {
+    min-width: 34px;
+  }
+
+  .zoom-controls .zoom-value {
+    width: 42px;
+  }
+}
