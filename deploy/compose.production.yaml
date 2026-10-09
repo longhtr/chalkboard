@@ -1,0 +1,248 @@
+# Production stack. Caddy terminates TLS, nginx serves the compiled application
+# and proxies to Fastify, PostgreSQL persists everything.
+#
+# Exactly one server may run: it takes a PostgreSQL advisory lock on becoming
+# ready, and a second instance exits rather than serving the same boards. Never
+# raise the replica count, and never start a replacement before the old
+# container has stopped.
+
+# Docker's json-file driver keeps every line forever unless told otherwise, and
+# the server logs one entry per request, so an unbounded log eventually fills
+# the volume and takes PostgreSQL down with it. Declaring the bound here rather
+# than in the host's daemon.json keeps it with the stack: a daemon default binds
+# only containers created after it is written, so an existing deployment silently
+# keeps its old unlimited setting.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-file: '3'
+    max-size: 10m
+
+services:
+  postgres:
+    logging: *logging
+    image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 768m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-chalkboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-chalkboard}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-chalkboard} -d ${POSTGRES_DB:-chalkboard}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Runs to completion before the server starts. Reads only DATABASE_URL, so no
+  # public origin or sender identity is handed to a job that cannot use them.
+  migrate:
+    logging: *logging
+    image: chalkboard-server:${CHALKBOARD_VERSION:-0.1.0}
+    command: ['node', 'dist/migrate.js']
+    restart: 'no'
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Restores the five public cloud-demo identities and revokes their old
+  # sessions. It must finish while the production runtime lock is free.
+  demo-accounts:
+    logging: *logging
+    image: chalkboard-server:${CHALKBOARD_VERSION:-0.1.0}
+    command: ['node', 'dist/seed-demo-accounts.js']
+    restart: 'no'
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  server:
+    logging: *logging
+    image: chalkboard-server:${CHALKBOARD_VERSION:-0.1.0}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 640m
+    environment:
+      # Fallback only; the host .env sets the operating value. Both stay at or
+      # below the immutable 250-account hard cap.
+      ACCOUNT_REGISTRATION_LIMIT: ${ACCOUNT_REGISTRATION_LIMIT:-10}
+      # Verification codes go through the provider's HTTPS API. No key appears
+      # here: the API key is mounted read-only from the materialized cache.
+      CHALKBOARD_COMMIT: ${CHALKBOARD_COMMIT:?set CHALKBOARD_COMMIT}
+      CHALKBOARD_VERSION: ${CHALKBOARD_VERSION:-0.1.0}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      # Fallback only; the host .env sets the operating values. Both stay at or
+      # below the immutable 100/day and 3,000/month hard caps.
+      EMAIL_DAILY_SEND_LIMIT: ${EMAIL_DAILY_SEND_LIMIT:-10}
+      EMAIL_FROM: ${EMAIL_FROM:?set EMAIL_FROM}
+      EMAIL_MONTHLY_SEND_LIMIT: ${EMAIL_MONTHLY_SEND_LIMIT:-100}
+      EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:?set EMAIL_REPLY_TO}
+      # Turnstile's browser site key is public. Its private validation material
+      # is never an environment variable and is unavailable until safely mounted.
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?set TURNSTILE_SITE_KEY}
+      HOST: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      NODE_ENV: production
+      PORT: '3000'
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-30000}
+      # Caddy, then nginx. Two proxies stand between the browser and Fastify,
+      # and this is what decides which address rate limiting believes.
+      TRUST_PROXY_HOPS: '2'
+    volumes:
+      # The source directory is root-owned and mode 0700. Docker opens these
+      # exact files before dropping to the node runtime UID; only the server
+      # receives them, read-only, and a refresh takes effect on recreation.
+      - ./runtime/application-security/current/admission-hmac-key:/run/secrets/admission-hmac-key:ro
+      - ./runtime/application-security/current/admission-hmac-key-generation:/run/secrets/admission-hmac-key-generation:ro
+      - ./runtime/application-security/current/turnstile-secret:/run/secrets/turnstile-secret:ro
+      - ./runtime/application-security/current/resend-api-key:/run/secrets/resend-api-key:ro
+      - ./runtime/application-security/current/resend-webhook-secret:/run/secrets/resend-webhook-secret:ro
+    depends_on:
+      demo-accounts:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    # Must exceed SHUTDOWN_TIMEOUT_MS. The process force-exits at that deadline,
+    # so a shorter external kill can cut short the final Yjs compaction.
+    stop_grace_period: 60s
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health/ready').then((response) => { process.exit(response.ok ? 0 : 1); }).catch(() => { process.exit(1); })",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  web:
+    logging: *logging
+    image: chalkboard-web:${CHALKBOARD_VERSION:-0.1.0}
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /var/cache/nginx:size=32m,uid=101,gid=101
+      - /var/run:size=1m,uid=101,gid=101
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 128m
+    # nginx resolves `server` once when it loads its configuration and exits if
+    # the name is missing, so it must not start before the server answers.
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # Logical backups of every board, account, and uploaded image. Uses the same
+  # pinned PostgreSQL image as the database, so it introduces no new artifact.
+  #
+  # Dumps land on the same volume as the data they protect, which covers
+  # deletion, corruption, and a bad migration but not the loss of the disk.
+  # EBS snapshots cover that; the two are not interchangeable.
+  backup:
+    logging: *logging
+    image: postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    command: ['/bin/sh', '/usr/local/bin/backup.sh']
+    environment:
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETRY_SECONDS: ${BACKUP_RETRY_SECONDS:-60}
+      BACKUP_RETAIN_DAYS: ${BACKUP_RETAIN_DAYS:-14}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    volumes:
+      - ./backup.sh:/usr/local/bin/backup.sh:ro
+      - postgres-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    logging: *logging
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 128m
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      # The public hostname. Port 80 must stay reachable: Let's Encrypt uses it
+      # for issuance and for every renewal.
+      CHALKBOARD_SITE_ADDRESS: ${CHALKBOARD_SITE_ADDRESS:?set CHALKBOARD_SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy-config:
+  caddy-data:
+  postgres-backups:
+  postgres-data:

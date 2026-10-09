@@ -1,0 +1,59 @@
+# Focused release invariants for deploy/account-email.yaml.
+# Both secrets deliberately use the AWS managed Secrets Manager key because the
+# operator's cost boundary rejects a recurring customer-managed-key charge.
+
+rule application_security_secret_is_retained {
+  Resources.ApplicationSecuritySecret.Type == "AWS::SecretsManager::Secret"
+  Resources.ApplicationSecuritySecret.DeletionPolicy == "Retain"
+  Resources.ApplicationSecuritySecret.UpdateReplacePolicy == "Retain"
+  Resources.ApplicationSecuritySecret.Properties.GenerateSecretString.GenerateStringKey == "admissionHmacKey"
+  Resources.ApplicationSecuritySecret.Properties.KmsKeyId not exists
+  Resources.ApplicationSecuritySecret.Properties.SecretString not exists
+}
+
+# The provider secret must carry no value in the template. Both keys are entered
+# by the operator, and a generated placeholder would look like a working key
+# while failing at the provider.
+rule email_provider_secret_is_retained_and_operator_entered {
+  Resources.EmailProviderSecret.Type == "AWS::SecretsManager::Secret"
+  Resources.EmailProviderSecret.DeletionPolicy == "Retain"
+  Resources.EmailProviderSecret.UpdateReplacePolicy == "Retain"
+  Resources.EmailProviderSecret.Properties.KmsKeyId not exists
+  Resources.EmailProviderSecret.Properties.SecretString not exists
+  Resources.EmailProviderSecret.Properties.GenerateSecretString not exists
+}
+
+# Delivery authenticates with a provider API key, so the instance role must hold
+# exactly two secret reads and no send permission of any kind.
+rule runtime_policy_is_narrow {
+  Resources.ApplicationRuntimePolicy.Type == "AWS::IAM::Policy"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyName == "account-email"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Sid == "ReadExactApplicationSecuritySecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Action == "secretsmanager:GetSecretValue"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Resource.Ref == "ApplicationSecuritySecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[0].Condition not exists
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Sid == "ReadExactEmailProviderSecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Effect == "Allow"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Action == "secretsmanager:GetSecretValue"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Resource.Ref == "EmailProviderSecret"
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[1].Condition not exists
+  Resources.ApplicationRuntimePolicy.Properties.PolicyDocument.Statement[2] not exists
+}
+
+# No SES, SNS, or other AWS email resource may reappear in this control.
+rule no_provider_resources_remain {
+  Resources.TransactionalConfigurationSet not exists
+  Resources.FeedbackTopic not exists
+  Resources.FeedbackTopicPolicy not exists
+  Resources.FeedbackEventDestination not exists
+  Resources.FeedbackSubscription not exists
+}
+
+rule only_the_instance_role_is_parameterized {
+  Parameters.InstanceRoleName.Type == "String"
+  Parameters.SendingIdentityDomain not exists
+  Parameters.SandboxRecipientEmailIdentity not exists
+  Parameters.FeedbackEndpoint not exists
+  Parameters.CreateHttpsSubscription not exists
+}

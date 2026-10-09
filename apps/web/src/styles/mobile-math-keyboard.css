@@ -1,0 +1,166 @@
+/* Phone-only MathLive keyboard: compact task tabs, coherent key grid, and Chalkboard theme. */
+@media (width <= 600px), (pointer: coarse) {
+  .ML__keyboard {
+    --keyboard-accent-color: var(--accent);
+    --keyboard-background: var(--surface-sunken);
+    --keyboard-border: var(--border);
+    --keyboard-padding-horizontal: max(
+      4px,
+      env(safe-area-inset-left),
+      env(safe-area-inset-right)
+    );
+    --keyboard-padding-top: 5px;
+    --keyboard-padding-bottom: 4px;
+    --keyboard-toolbar-text: var(--text-body);
+    --keyboard-toolbar-text-active: var(--on-accent);
+    --keyboard-toolbar-background-hover: var(--accent-tint-hover);
+    --keyboard-toolbar-background-selected: var(--accent);
+    --keyboard-horizontal-rule: 1px solid var(--border);
+    --keycap-background: var(--surface);
+    --keycap-background-hover: var(--surface-raised);
+    --keycap-background-active: var(--accent);
+    --keycap-background-pressed: var(--accent-strong);
+    --keycap-border: var(--border);
+    --keycap-border-bottom: var(--border-strong);
+    --keycap-text: var(--text-strong);
+    --keycap-text-active: var(--on-accent);
+    --keycap-text-hover: var(--text-strong);
+    --keycap-text-pressed: var(--on-accent);
+    --keycap-secondary-background: var(--accent-tint-strong);
+    --keycap-secondary-background-hover: var(--accent-tint-hover);
+    --keycap-secondary-border: var(--border-accent);
+    --keycap-secondary-border-bottom: var(--accent-pale);
+    --keycap-secondary-text: var(--accent-deep);
+    --keycap-height: 44px;
+    --keycap-gap: 4px;
+    --keycap-width: calc((100cqw + var(--_keycap-gap)) / 10);
+    --keycap-font-size: 20px;
+    --keycap-small-font-size: 13px;
+    --keycap-glyph-size: 19px;
+    --keycap-glyph-size-lg: 22px;
+    --variant-panel-background: var(--surface-raised);
+    --variant-keycap-text: var(--text-strong);
+  }
+
+  body > .ML__keyboard.is-visible > .MLK__backdrop {
+    border-color: var(--border);
+    box-shadow: 0 -10px 28px rgb(var(--shadow-tint) / 14%);
+  }
+
+  .ML__keyboard .MLK__toolbar {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 2px 5px;
+  }
+
+  .ML__keyboard .MLK__toolbar > .left {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .ML__keyboard .MLK__toolbar > .left > div,
+  .ML__keyboard .MLK__toolbar > .left > .selected {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 4px;
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 9px;
+    font-family: ui-sans-serif, system-ui, sans-serif !important;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 700;
+    text-overflow: ellipsis;
+  }
+
+  .ML__keyboard .MLK__toolbar > .left > .selected {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .ML__keyboard .MLK__rows {
+    gap: 4px;
+    margin-bottom: 0;
+  }
+
+  .ML__keyboard .MLK__rows > .MLK__row {
+    gap: 4px;
+  }
+
+  .ML__keyboard .MLK__rows > .MLK__row > div:not(.separator) {
+    border-radius: 10px;
+    box-shadow: 0 1px 1px rgb(var(--shadow-tint) / 8%);
+  }
+
+  .ML__keyboard .MLK__layer[id^='chalkboard-'] .MLK__row:last-child {
+    padding-top: 5px;
+    margin-top: 1px;
+    border-top: 1px solid var(--border);
+  }
+
+  .ML__keyboard .MLK__rows > .MLK__row .shift,
+  .ML__keyboard .MLK__rows > .MLK__row .action {
+    padding: 6px;
+    color: var(--accent-deep);
+    font-size: 15px;
+  }
+
+  .ML__keyboard
+    .MLK__layer[id^='chalkboard-']
+    .MLK__row:last-child
+    > .action:last-child {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .ML__keyboard
+    .MLK__layer[id^='chalkboard-']
+    .MLK__keycap[aria-label='space'] {
+    color: var(--text-muted);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 650;
+    text-transform: uppercase;
+  }
+
+  .ML__keyboard
+    #chalkboard-functions-layer
+    .MLK__row:not(:last-child)
+    > .MLK__keycap {
+    font-size: 16px;
+  }
+
+  .ML__keyboard
+    #chalkboard-greek-layer
+    .MLK__row:not(:last-child)
+    > .MLK__keycap {
+    width: calc((100% - 7 * var(--_keycap-gap)) / 8);
+  }
+
+  .ML__keyboard .MLK__variant-panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-panel);
+  }
+}
+
+@media (height <= 500px) and (pointer: coarse) {
+  .ML__keyboard {
+    --keycap-height: 36px;
+    --keycap-font-size: 17px;
+    --keycap-small-font-size: 12px;
+  }
+
+  .ML__keyboard .MLK__toolbar {
+    min-height: 34px;
+  }
+
+  .ML__keyboard .MLK__toolbar > .left > div,
+  .ML__keyboard .MLK__toolbar > .left > .selected {
+    min-height: 30px;
+  }
+}

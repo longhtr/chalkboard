@@ -1,0 +1,187 @@
+/*
+ * Semantic color tokens for the light and dark themes.
+ *
+ * Light values reproduce the palette the application shipped with; the dark
+ * scale is defined against them role by role. These tokens recolor application
+ * chrome and the board's paper, grid, and selection handles. Board CONTENT is
+ * not themed here: elements store their own light and dark colors, resolved in
+ * `themeColors.ts`.
+ *
+ * The theme is an explicit choice published as `data-theme` on the document
+ * element; light is the default and the system preference is not consulted.
+ */
+:root {
+  /* Page, panels, and raised surfaces. */
+  --page: #fbfaf8;
+  --surface: #fff;
+  --surface-raised: #faf9ff;
+  --surface-subtle: #f8f7ff;
+  --surface-neutral: #f4f3f1;
+  --surface-sunken: #ecebf2;
+  --on-accent: #fff;
+
+  /* Board Objects entries; kept local so other accent surfaces stay unchanged. */
+  --object-entry: #f8f7ff;
+  --object-entry-active: #f0efff;
+  --object-entry-active-border: #aaa5df;
+  --object-entry-index: #e9e8ff;
+
+  /* Borders, from neutral hairlines to accent-tinted edges. */
+  --border: #dedce8;
+  --border-neutral: #d9d7d2;
+  --border-strong: #d1d5db;
+  --border-accent: #dddafe;
+
+  /* Text, ordered by descending emphasis. */
+  --text-strong: #111827;
+  --text: #1f2937;
+  --text-heading: #292748;
+  --text-body-strong: #374151;
+  --text-body: #4b5563;
+  --text-muted: #6b7280;
+  --text-soft: #9ca3af;
+  --text-plum: #55536f;
+  --text-plum-deep: #34324f;
+  --text-indigo-muted: #4b4a80;
+
+  /* Indigo accent ramp. */
+  --accent: #6965db;
+  --accent-hover: #5b57ca;
+  --accent-strong: #514dc5;
+  --accent-mid: #5e59b5;
+  --accent-deep: #433f9d;
+  --accent-deeper: #37347f;
+  --accent-pale: #aaa5df;
+  --accent-tint: #f0efff;
+  --accent-tint-strong: #e9e8ff;
+  --accent-tint-hover: #cbc8fa;
+
+  /* Feedback: warning, danger, success, and information. */
+  --warning-text: #765b18;
+  --warning-text-deep: #765000;
+  --warning-bg: #fff7df;
+  --warning-bg-soft: #fffcf3;
+  --warning-border: #eadcae;
+  --warning-dot: #d99e2b;
+  --danger: #e03131;
+  --danger-text: #9b1c1c;
+  --danger-bg: #fdf2f2;
+  --danger-border: #f0c9c9;
+  --success-text: #226647;
+  --success-dot: #22c55e;
+  --success-bg: #edf9f2;
+  --success-border: #c8e8d5;
+  --info-text: #3455a4;
+  --info-bg: #eff3ff;
+  --info-border: #d1dcfb;
+
+  /* Shadow and scrim tints, kept separate so dark mode can deepen them. */
+  --shadow-tint: 17 24 39;
+  --shadow-warm: 31 41 55;
+  --overlay-surface: rgb(255 255 255 / 96%);
+  --overlay-warning: rgb(255 250 235 / 98%);
+  --overlay-veil: rgb(255 255 255 / 84%);
+  --shadow-panel: 0 2px 5px rgb(0 0 0 / 8%), 0 12px 30px rgb(0 0 0 / 7%);
+
+  /* Board surface. Content inverts as one image rather than per element. */
+  --canvas-paper: #fbfaf8;
+  --canvas-grid: #d7d5d0;
+  --canvas-handle: #fff;
+
+  /*
+   * `--accent-soft`, `--ink`, and `--muted` are referenced by ten style-panel,
+   * dialogs, and workspace-shell declarations but have never been defined
+   * anywhere, so those declarations are invalid at computed-value time: the
+   * backgrounds and box-shadows resolve to `transparent`/`none` and the colors
+   * inherit. That is the appearance the application ships with.
+   *
+   * They are deliberately still undefined. Defining them would light up ten
+   * dormant declarations at once — notably a solid fill behind every active
+   * style-panel toggle — which is a light-mode restyle rather than a theme.
+   * Note the near neighbour `--accent-pale` above: it is a real token this
+   * file owns, and is not a way to give `--accent-soft` a value by the back
+   * door. Resolving those references is worth doing as its own change.
+   */
+
+  --focus-ring: #514dc7;
+}
+
+/*
+ * The dark scale. Surfaces climb from the page rather than descending from
+ * white, so panels read as raised in both themes.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #121212;
+  --surface: #232329;
+  --surface-raised: #2a2933;
+  --surface-subtle: #2e2d38;
+  --surface-neutral: #26262c;
+  --surface-sunken: #1c1c21;
+  --on-accent: #fff;
+
+  /* Quiet unselected rows; selection keeps a filled indigo treatment. */
+  --object-entry: #29292f;
+  --object-entry-active: #2c2a42;
+  --object-entry-active-border: #423e6b;
+  --object-entry-index: #34314f;
+
+  --border: #3b3a45;
+  --border-neutral: #3a3a41;
+  --border-strong: #4a4956;
+  --border-accent: #423e6b;
+
+  --text-strong: #f4f4f7;
+  --text: #e6e6ea;
+  --text-heading: #dedde8;
+  --text-body-strong: #d5d6dd;
+  --text-body: #c6c7ce;
+  --text-muted: #9b9ba6;
+  --text-soft: #85858f;
+  --text-plum: #a9a8ba;
+  --text-plum-deep: #c0bfd0;
+  --text-indigo-muted: #a9a7d0;
+
+  --accent: #7b76e8;
+  --accent-hover: #8b87ee;
+  --accent-strong: #a5a1f5;
+  --accent-mid: #8e8aea;
+  --accent-deep: #b3b0f7;
+  --accent-deeper: #c4c1fa;
+  --accent-pale: #5c5893;
+  --accent-tint: #2c2a42;
+  --accent-tint-strong: #383467;
+  --accent-tint-hover: #443f78;
+
+  --warning-text: #e8c977;
+  --warning-text-deep: #f0d488;
+  --warning-bg: #332c14;
+  --warning-bg-soft: #2a2412;
+  --warning-border: #574929;
+  --warning-dot: #d99e2b;
+  --danger: #f26b6b;
+  --danger-text: #f08a8a;
+  --danger-bg: #34201f;
+  --danger-border: #5c3130;
+  --success-text: #7fd6a4;
+  --success-dot: #22c55e;
+  --success-bg: #17301f;
+  --success-border: #2c4c38;
+  --info-text: #9dbcf5;
+  --info-bg: #1b2740;
+  --info-border: #334568;
+
+  --shadow-tint: 0 0 0;
+  --shadow-warm: 0 0 0;
+  --overlay-surface: rgb(35 35 41 / 96%);
+  --overlay-warning: rgb(51 44 20 / 98%);
+  --overlay-veil: rgb(18 18 18 / 84%);
+  --shadow-panel: 0 2px 5px rgb(0 0 0 / 40%), 0 12px 30px rgb(0 0 0 / 34%);
+
+  /* Board content carries its own dark colors now; nothing is inverted. */
+  --canvas-paper: #121212;
+  --canvas-grid: #34343b;
+  --canvas-handle: #232329;
+
+  --focus-ring: #9490f0;
+}

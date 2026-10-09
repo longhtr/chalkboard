@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Chalkboard — a collaborative workspace for mathematical thinking."
+    />
+    <title>Chalkboard</title>
+    <script>
+      // Applies the stored theme before first paint, so a dark-theme viewer
+      // never sees a light flash while the bundle loads. The application takes
+      // over the same attribute once it mounts; anything other than a stored
+      // 'dark' — including storage being unreadable — resolves to light.
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem('chalkboard:theme') === 'dark'
+            ? 'dark'
+            : 'light';
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

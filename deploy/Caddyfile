@@ -1,0 +1,21 @@
+# Terminates TLS and forwards to the web image, which serves the compiled
+# application and proxies the API and WebSocket to the server.
+#
+# Caddy obtains and renews Let's Encrypt certificates automatically, so both
+# hostnames must already resolve to this host and port 80 must stay reachable.
+www.{$CHALKBOARD_SITE_ADDRESS} {
+	redir https://{$CHALKBOARD_SITE_ADDRESS}{uri} permanent
+}
+
+{$CHALKBOARD_SITE_ADDRESS} {
+	encode zstd gzip
+
+	# The collaboration WebSocket needs a long idle window; Yjs connections stay
+	# open for the life of an editing session.
+	reverse_proxy web:8080 {
+		transport http {
+			read_timeout 1h
+			write_timeout 1h
+		}
+	}
+}

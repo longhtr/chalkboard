@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Chalkboard account-email application secrets and exact runtime read access
+
+Parameters:
+  InstanceRoleName:
+    Type: String
+    AllowedPattern: '^[\w+=,.@-]{1,64}$'
+    Description: Existing EC2 role that receives only exact secret-read access
+
+Resources:
+  ApplicationSecuritySecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W77
+            reason: Uses the AWS managed Secrets Manager key; cross-account sharing is neither required nor permitted.
+    Properties:
+      Description: Private Turnstile validation and email-admission key material for Chalkboard
+      GenerateSecretString:
+        ExcludePunctuation: true
+        GenerateStringKey: admissionHmacKey
+        PasswordLength: 48
+        SecretStringTemplate: '{}'
+      Tags:
+        - Key: application
+          Value: chalkboard
+        - Key: purpose
+          Value: application-security
+
+  # Deliberately separate from the application-security secret. Provider
+  # credentials should be rotated freely, while rotating the admission key
+  # resets live abuse counters and lets replacement digests bypass limits until
+  # the longest window expires. One object cannot hold both cadences.
+  #
+  # Created with no version on purpose: the operator enters both values through
+  # an operator-controlled interface before the first materialization. Until
+  # then resolution fails and every email flow stays closed, which is the
+  # correct signal rather than a generated placeholder that looks like a key.
+  EmailProviderSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W77
+            reason: Uses the AWS managed Secrets Manager key; cross-account sharing is neither required nor permitted.
+    Properties:
+      Description: Operator-entered transactional email provider API key and webhook signing secret
+      Tags:
+        - Key: application
+          Value: chalkboard
+        - Key: purpose
+          Value: email-provider-credentials
+
+  ApplicationRuntimePolicy:
+    Type: AWS::IAM::Policy
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PolicyName: account-email
+      Roles:
+        - !Ref InstanceRoleName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Transactional delivery authenticates with a provider API key, so the
+          # instance role grants no send permission of any kind.
+          - Sid: ReadExactApplicationSecuritySecret
+            Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Ref ApplicationSecuritySecret
+          - Sid: ReadExactEmailProviderSecret
+            Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Ref EmailProviderSecret
+
+Outputs:
+  ApplicationSecuritySecretArn:
+    Description: Non-secret ARN consumed only by the approved asm-exec refresh procedure
+    Value: !Ref ApplicationSecuritySecret
+  EmailProviderSecretArn:
+    Description: Non-secret ARN consumed only by the approved asm-exec refresh procedure
+    Value: !Ref EmailProviderSecret
+  ApprovedEmailFrom:
+    Description: Exact EMAIL_FROM value approved for the production server
+    Value: Chalkboard <support@chalkboard.space>
+  ApprovedEmailReplyTo:
+    Description: Exact EMAIL_REPLY_TO value approved for the production server
+    Value: support@chalkboard.space

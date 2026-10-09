@@ -1,0 +1,23 @@
+{
+  "elements": [
+    {
+      "backgroundColor": "transparent",
+      "createdBy": "legacy-cloud-cache",
+      "height": 80,
+      "id": "legacy-cached-rectangle",
+      "opacity": 1,
+      "rotation": 0,
+      "strokeColor": "#1f2937",
+      "strokeWidth": 2,
+      "type": "rectangle",
+      "width": 120,
+      "x": 10,
+      "y": 20
+    }
+  ],
+  "id": "cloud:retained-cache",
+  "pending": true,
+  "schemaVersion": 2,
+  "title": "Retained cloud cache",
+  "updatedAt": 1704067200000
+}

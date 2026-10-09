@@ -1,0 +1,58 @@
+{
+  "appearance": {
+    "font": "excalifont"
+  },
+  "elements": [
+    {
+      "arrowheads": "both",
+      "backgroundColor": "transparent",
+      "createdBy": "archive",
+      "height": 40,
+      "id": "decorated-freehand",
+      "opacity": 1,
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 60,
+          "y": 20
+        },
+        {
+          "x": 120,
+          "y": 40
+        }
+      ],
+      "rotation": 0,
+      "strokeColor": "#1f2937",
+      "strokeStyle": "solid",
+      "strokeWidth": 2,
+      "type": "freehand",
+      "width": 120,
+      "x": 10,
+      "y": 200
+    },
+    {
+      "backgroundColor": "#a5d8ff",
+      "cornerRadius": 0,
+      "createdBy": "archive",
+      "fillStyle": "cross-hatch",
+      "height": 80,
+      "id": "hatched-shape",
+      "opacity": 1,
+      "rotation": 0,
+      "shapeKind": "rectangle",
+      "strokeColor": "#1f2937",
+      "strokeStyle": "solid",
+      "strokeWidth": 2,
+      "type": "shape",
+      "width": 120,
+      "x": 10,
+      "y": 20
+    }
+  ],
+  "mixedContentByElementId": {},
+  "schemaVersion": 1,
+  "title": "Fill styles and freehand arrowheads"
+}
